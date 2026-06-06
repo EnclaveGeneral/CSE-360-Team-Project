@@ -428,6 +428,30 @@ public class Database {
 		return 0;
 	}
 	
+	/*******
+	 * <p> Method: List&lt;String&gt; getInvitationList() </p>
+	 *
+	 * <p> Description: Generate a List of Strings, one for each outstanding invitation in the
+	 * InvitationCodes table, formatted as "code  |  emailAddress  |  role". Returns an empty list
+	 * when there are no invitations, or null if the query fails. </p>
+	 *
+	 * @return a list of the outstanding invitations found in the database.
+	 */
+	public List<String> getInvitationList() {
+		List<String> invitationList = new ArrayList<String>();
+		String query = "SELECT code, emailAddress, role FROM InvitationCodes";
+		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+			ResultSet rs = pstmt.executeQuery();
+			while (rs.next()) {
+				invitationList.add(rs.getString("code") + "  |  "
+						+ rs.getString("emailAddress") + "  |  " + rs.getString("role"));
+			}
+		} catch (SQLException e) {
+			return null;
+		}
+		return invitationList;
+	}
+	
 	
 	/*******
 	 * <p> Method: boolean emailaddressHasBeenUsed(String emailAddress) </p>
