@@ -3,7 +3,7 @@ package guiFirstAdmin;
 import java.sql.SQLException;
 
 import userNameRecognizer.UserNameRecognizer;
-import userNameRecognizer.UserNameRecognizerTestbed;
+import passwordPopUpWindow.Model;
 import database.Database;
 import entityClasses.User;
 import javafx.stage.Stage;
@@ -117,6 +117,13 @@ public class ControllerFirstAdmin {
 			return;
 		}
 		
+		// Check to see our password has passed validation 
+		String passwordValidation = Model.evaluatePassword(adminPassword1);
+		if (passwordValidation.length() > 0) {
+			ViewFirstAdmin.label_PasswordsDoNotMatch.setText(passwordValidation);
+			return; 
+		}
+
 		
 		// Make sure the two passwords are the same
 		if (adminPassword1.compareTo(adminPassword2) == 0) {
@@ -145,6 +152,7 @@ public class ControllerFirstAdmin {
 			ViewFirstAdmin.label_PasswordsDoNotMatch.setText(
 					"The two passwords must match. Please try again!");
 		}
+		
 	}
 	
 	

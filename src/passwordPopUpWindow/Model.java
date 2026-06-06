@@ -115,11 +115,14 @@ public class Model {
 	public static boolean foundNumericDigit = false;
 	public static boolean foundSpecialChar = false;
 	public static boolean foundLongEnough = false;
+	public static boolean foundShortEnough = true; 
 	private static String inputLine = "";				// The input line
 	private static char currentChar;					// The current character in the line
 	private static int currentCharNdx;					// The index of the current character
 	private static boolean running;						// The flag that specifies if the FSM is 
 														// running
+	
+	private static final int maxPasswordLength = 24;    // Current longest acceptable password length
 
 	/*
 	 * This private method displays the input line and then on a line under it displays the input
@@ -146,10 +149,13 @@ public class Model {
 	 */
 	
 	private static void updateFlags() {
+		
+		
 		if (foundUpperCase) {
 			View.label_UpperCase.setText("At least one upper case letter - Satisfied");
 			View.label_UpperCase.setTextFill(Color.GREEN);
 		}
+		
 
 		if (foundLowerCase) {
 			View.label_LowerCase.setText("At least one lower case letter - Satisfied");
@@ -196,6 +202,10 @@ public class Model {
 		
 		if(input.length() <= 0) {
 			return "*** Error *** The password is empty!";
+		}
+		
+		if (input.length() > maxPasswordLength ) {
+			return "*** Error *** The password exceeded maximum length!";
 		}
 		
 		// The input is not empty, so we can access the first character
@@ -270,6 +280,7 @@ public class Model {
 			
 		if (!foundLongEnough)
 			errMessage += "Long Enough; ";
+		
 		
 		if (errMessage == "")
 			return "";

@@ -76,7 +76,7 @@ public class View {
 	static protected Label label_NumericDigit = new Label();	
 	static protected Label label_SpecialChar = new Label();
 	static protected Label label_LongEnough = new Label();
-
+	
     /* 
 	 * Button to finish the process.  It only become active when all the requirements have been met
 	 * 
