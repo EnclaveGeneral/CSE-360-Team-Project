@@ -121,7 +121,9 @@ public class ViewFirstAdmin {
 		theStage.setScene(theFirstAdminScene);
 		theStage.show();
 	}
-
+	
+	
+	
 	/**********
 	 * <p> Method: private ViewFirstAdmin() </p>
 	 * 
@@ -179,33 +181,33 @@ public class ViewFirstAdmin {
 				-> {ControllerFirstAdmin.setAdminPassword1(); });
 		
 		// Password requirement labels - shown between password1 and password2
-		setupLabelUI(label_ReqUpperCase, "Arial", 14, width, Pos.BASELINE_LEFT, 50, 240);
+		setupLabelUI(label_ReqUpperCase, "Arial", 14, width, Pos.BASELINE_LEFT, 50, 250);
 		label_ReqUpperCase.setText("At least one upper case letter - Not yet satisfied");
 		label_ReqUpperCase.setTextFill(Color.RED);
 
-		setupLabelUI(label_ReqLowerCase, "Arial", 14, width, Pos.BASELINE_LEFT, 50, 258);
+		setupLabelUI(label_ReqLowerCase, "Arial", 14, width, Pos.BASELINE_LEFT, 50, 265);
 		label_ReqLowerCase.setText("At least one lower case letter - Not yet satisfied");
 		label_ReqLowerCase.setTextFill(Color.RED);
 
-		setupLabelUI(label_ReqNumericDigit, "Arial", 14, width, Pos.BASELINE_LEFT, 50, 276);
+		setupLabelUI(label_ReqNumericDigit, "Arial", 14, width, Pos.BASELINE_LEFT, 50, 280);
 		label_ReqNumericDigit.setText("At least one numeric digit - Not yet satisfied");
 		label_ReqNumericDigit.setTextFill(Color.RED);
 
-		setupLabelUI(label_ReqSpecialChar, "Arial", 14, width, Pos.BASELINE_LEFT, 50, 294);
+		setupLabelUI(label_ReqSpecialChar, "Arial", 14, width, Pos.BASELINE_LEFT, 50, 295);
 		label_ReqSpecialChar.setText("At least one special character - Not yet satisfied");
 		label_ReqSpecialChar.setTextFill(Color.RED);
 
-		setupLabelUI(label_ReqLongEnough, "Arial", 14, width, Pos.BASELINE_LEFT, 50, 312);
+		setupLabelUI(label_ReqLongEnough, "Arial", 14, width, Pos.BASELINE_LEFT, 50, 310);
 		label_ReqLongEnough.setText("At least 8 characters - Not yet satisfied");
 		label_ReqLongEnough.setTextFill(Color.RED);
 
-		setupLabelUI(label_ReqShortEnough, "Arial", 14, width, Pos.BASELINE_LEFT, 50, 330);
+		setupLabelUI(label_ReqShortEnough, "Arial", 14, width, Pos.BASELINE_LEFT, 50, 325);
 		label_ReqShortEnough.setText("No more than 24 characters - Not yet satisfied");
 		label_ReqShortEnough.setTextFill(Color.RED);
 
 
 		// Establish the text input operand field for the password
-		setupTextUI(text_AdminPassword2, "Arial", 18, 300, Pos.BASELINE_LEFT, 50, 360, 
+		setupTextUI(text_AdminPassword2, "Arial", 18, 300, Pos.BASELINE_LEFT, 50, 365, 
 				true);
 		text_AdminPassword2.setPromptText("Enter Admin Password Again");
 		text_AdminPassword2.textProperty().addListener((_, _, _) 
