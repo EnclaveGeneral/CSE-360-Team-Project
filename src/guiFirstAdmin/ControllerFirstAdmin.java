@@ -7,6 +7,7 @@ import passwordPopUpWindow.Model;
 import database.Database;
 import entityClasses.User;
 import javafx.stage.Stage;
+import javafx.scene.paint.Color;
 
 /*******
  * <p> Title: ControllerFirstAdmin Class. </p>
@@ -80,6 +81,43 @@ public class ControllerFirstAdmin {
 	 */
 	protected static void setAdminPassword1() {
 		adminPassword1 = ViewFirstAdmin.text_AdminPassword1.getText();
+		
+		// Check existing max length first 
+		if (adminPassword1.length() > 24) {
+			ViewFirstAdmin.label_ReqShortEnough.setText("No more than 24 characters - Not satisfied");
+	        ViewFirstAdmin.label_ReqShortEnough.setTextFill(Color.RED);
+		} else {
+			ViewFirstAdmin.label_ReqShortEnough.setText("No more than 24 characters - Satisfied");
+	        ViewFirstAdmin.label_ReqShortEnough.setTextFill(Color.GREEN);
+
+		}
+		
+		// Run the evaluator to check the other requirements
+	    passwordPopUpWindow.Model.evaluatePassword(adminPassword1);
+	    
+	    // Update each label based on the flags the evaluator set
+	    ViewFirstAdmin.label_ReqUpperCase.setTextFill(passwordPopUpWindow.Model.foundUpperCase ? Color.GREEN : Color.RED);
+	    ViewFirstAdmin.label_ReqUpperCase.setText("At least one upper case letter - " + 
+	        (passwordPopUpWindow.Model.foundUpperCase ? "Satisfied" : "Not yet satisfied"));
+	    
+	    ViewFirstAdmin.label_ReqLowerCase.setTextFill(passwordPopUpWindow.Model.foundLowerCase ? Color.GREEN : Color.RED);
+	    ViewFirstAdmin.label_ReqLowerCase.setText("At least one lower case letter - " + 
+	        (passwordPopUpWindow.Model.foundLowerCase ? "Satisfied" : "Not yet satisfied"));
+	    
+	    ViewFirstAdmin.label_ReqNumericDigit.setTextFill(passwordPopUpWindow.Model.foundNumericDigit ? Color.GREEN : Color.RED);
+	    ViewFirstAdmin.label_ReqNumericDigit.setText("At least one numeric digit - " + 
+	        (passwordPopUpWindow.Model.foundNumericDigit ? "Satisfied" : "Not yet satisfied"));
+	    
+	    ViewFirstAdmin.label_ReqSpecialChar.setTextFill(passwordPopUpWindow.Model.foundSpecialChar ? Color.GREEN : Color.RED);
+	    ViewFirstAdmin.label_ReqSpecialChar.setText("At least one special character - " + 
+	        (passwordPopUpWindow.Model.foundSpecialChar ? "Satisfied" : "Not yet satisfied"));
+	    
+	    ViewFirstAdmin.label_ReqLongEnough.setTextFill(passwordPopUpWindow.Model.foundLongEnough ? Color.GREEN : Color.RED);
+	    ViewFirstAdmin.label_ReqLongEnough.setText("At least 8 characters - " + 
+	        (passwordPopUpWindow.Model.foundLongEnough ? "Satisfied" : "Not yet satisfied"));
+
+		
+		
 		ViewFirstAdmin.label_PasswordsDoNotMatch.setText("");
 	}
 	

@@ -11,6 +11,7 @@ import javafx.scene.layout.Pane;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import javafx.scene.Scene;
+import javafx.scene.paint.Color;
 
 
 /*******
@@ -60,6 +61,16 @@ public class ViewFirstAdmin {
 	protected static TextField text_AdminUsername = new TextField();
 	protected static PasswordField text_AdminPassword1 = new PasswordField();
 	protected static PasswordField text_AdminPassword2 = new PasswordField();
+	
+	// Add password error and correction fields
+	protected static Label label_ReqUpperCase = new Label();
+	protected static Label label_ReqLowerCase = new Label();
+	protected static Label label_ReqNumericDigit = new Label();
+	protected static Label label_ReqSpecialChar = new Label();
+	protected static Label label_ReqLongEnough = new Label();
+	protected static Label label_ReqShortEnough = new Label();
+
+	
 	private static Button button_AdminSetup = new Button("Setup Admin Account");
 
 	// This alert is used should the user enter two passwords that do not match
@@ -166,31 +177,59 @@ public class ViewFirstAdmin {
 		text_AdminPassword1.setPromptText("Enter Admin Password");
 		text_AdminPassword1.textProperty().addListener((_, _, _)
 				-> {ControllerFirstAdmin.setAdminPassword1(); });
+		
+		// Password requirement labels - shown between password1 and password2
+		setupLabelUI(label_ReqUpperCase, "Arial", 14, width, Pos.BASELINE_LEFT, 50, 240);
+		label_ReqUpperCase.setText("At least one upper case letter - Not yet satisfied");
+		label_ReqUpperCase.setTextFill(Color.RED);
+
+		setupLabelUI(label_ReqLowerCase, "Arial", 14, width, Pos.BASELINE_LEFT, 50, 258);
+		label_ReqLowerCase.setText("At least one lower case letter - Not yet satisfied");
+		label_ReqLowerCase.setTextFill(Color.RED);
+
+		setupLabelUI(label_ReqNumericDigit, "Arial", 14, width, Pos.BASELINE_LEFT, 50, 276);
+		label_ReqNumericDigit.setText("At least one numeric digit - Not yet satisfied");
+		label_ReqNumericDigit.setTextFill(Color.RED);
+
+		setupLabelUI(label_ReqSpecialChar, "Arial", 14, width, Pos.BASELINE_LEFT, 50, 294);
+		label_ReqSpecialChar.setText("At least one special character - Not yet satisfied");
+		label_ReqSpecialChar.setTextFill(Color.RED);
+
+		setupLabelUI(label_ReqLongEnough, "Arial", 14, width, Pos.BASELINE_LEFT, 50, 312);
+		label_ReqLongEnough.setText("At least 8 characters - Not yet satisfied");
+		label_ReqLongEnough.setTextFill(Color.RED);
+
+		setupLabelUI(label_ReqShortEnough, "Arial", 14, width, Pos.BASELINE_LEFT, 50, 330);
+		label_ReqShortEnough.setText("No more than 24 characters - Not yet satisfied");
+		label_ReqShortEnough.setTextFill(Color.RED);
+
 
 		// Establish the text input operand field for the password
-		setupTextUI(text_AdminPassword2, "Arial", 18, 300, Pos.BASELINE_LEFT, 50, 260, 
+		setupTextUI(text_AdminPassword2, "Arial", 18, 300, Pos.BASELINE_LEFT, 50, 360, 
 				true);
 		text_AdminPassword2.setPromptText("Enter Admin Password Again");
 		text_AdminPassword2.textProperty().addListener((_, _, _) 
 				-> {ControllerFirstAdmin.setAdminPassword2(); });
 
 		// Set up the Log In button
-		setupButtonUI(button_AdminSetup, "Dialog", 18, 200, Pos.CENTER, 475, 210);
+		setupButtonUI(button_AdminSetup, "Dialog", 18, 200, Pos.CENTER, 475, 360);
 		button_AdminSetup.setOnAction((_) -> {
 			ControllerFirstAdmin.doSetupAdmin(theStage,1); 
 			});
 
 		// Label to display the Passwords do not match error message
-		setupLabelUI(label_PasswordsDoNotMatch, "Arial", 18, width, Pos.CENTER, 0, 300);
+		setupLabelUI(label_PasswordsDoNotMatch, "Arial", 18, width, Pos.CENTER, 0, 410);
 
 		setupButtonUI(button_Quit, "Dialog", 18, 250, Pos.CENTER, 300, 520);
 		button_Quit.setOnAction((_) -> {ControllerFirstAdmin.performQuit(); });
 
 		// Place all of the just-initialized GUI elements into the pane
 		theRootPane.getChildren().addAll(label_ApplicationTitle, label_TitleLine1,
-				label_TitleLine2, text_AdminUsername, text_AdminPassword1, 
-				text_AdminPassword2, button_AdminSetup, label_PasswordsDoNotMatch,
-				button_Quit);
+			    label_TitleLine2, text_AdminUsername, text_AdminPassword1,
+			    label_ReqUpperCase, label_ReqLowerCase, label_ReqNumericDigit,
+			    label_ReqSpecialChar, label_ReqLongEnough, label_ReqShortEnough,
+			    text_AdminPassword2, button_AdminSetup, label_PasswordsDoNotMatch,
+			    button_Quit);
 	}
 	
 	
