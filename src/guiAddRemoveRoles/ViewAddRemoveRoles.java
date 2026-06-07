@@ -171,7 +171,11 @@ public class ViewAddRemoveRoles {
 			
 		// Create the Pane for the list of widgets and the Scene for the window
 		theRootPane = new Pane();
+		
+		// Enable dark mode  
 		theAddRemoveRolesScene = new Scene(theRootPane, width, height);
+		theAddRemoveRolesScene.getStylesheets().add(ViewAddRemoveRoles.class.getResource("/dark-theme.css").toExternalForm());
+
 		
 		// Populate the window with the title and other common widgets and set their static state
 		

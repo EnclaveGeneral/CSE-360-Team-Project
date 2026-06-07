@@ -1,0 +1,56 @@
+/* Text fields and input controls */
+.text-field, .password-field, .combo-box {
+    -fx-background-color: #3c3f41;
+    -fx-text-fill: #e0e0e0;
+    -fx-prompt-text-fill: #888888;
+    -fx-border-color: #555555;
+    -fx-border-radius: 3;
+    -fx-background-radius: 3;
+}
+
+/* Scroll pane background */
+.scroll-pane {
+    -fx-background: #2b2b2b;
+}
+
+/* Tooltip styling */
+.tooltip {
+    -fx-background-color: #3c3f41;
+    -fx-text-fill: #e0e0e0;
+}
+
+/* General text color for labels */
+.label {
+    -fx-text-fill: #e0e0e0;
+}
+
+/* Root pane background */
+.root {
+    -fx-background-color: #2b2b2b;
+}
+
+Pane {
+    -fx-background-color: #2b2b2b;
+}
+
+/* Buttons */
+.button {
+    -fx-background-color: #3c3f41;
+    -fx-text-fill: #e0e0e0;
+    -fx-border-color: #555555;
+}
+
+/* ComboBox */
+.combo-box {
+    -fx-text-fill: white;
+    -fx-background-color: #3c3f41;
+}
+
+.combo-box-popup .list-cell {
+    -fx-text-fill: white;
+    -fx-background-color: #2b2b2b;
+}
+
+.combo-box-popup {
+    -fx-background-color: #2b2b2b;
+}

@@ -115,6 +115,9 @@ public class ViewManageInvitations {
 		// Create the Pane for the list of widgets and the Scene for the window
 		theRootPane = new Pane();
 		theManageInvitationsScene = new Scene(theRootPane, width, height);
+		
+		// Enable dark mode
+		theManageInvitationsScene.getStylesheets().add(ViewManageInvitations.class.getResource("/dark-theme.css").toExternalForm());
 
 		// GUI Area 1
 		label_PageTitle.setText("Manage Invitations Page");

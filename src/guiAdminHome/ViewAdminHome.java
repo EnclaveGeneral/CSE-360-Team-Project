@@ -196,7 +196,11 @@ public class ViewAdminHome {
 
 		// Create the Pane for the list of widgets and the Scene for the window
 		theRootPane = new Pane();
+		
+		// Enable dark mode color
 		theAdminHomeScene = new Scene(theRootPane, width, height);
+		theAdminHomeScene.getStylesheets().add(ViewAdminHome.class.getResource("/dark-theme.css").toExternalForm());
+
 	
 		// Populate the window with the title and other common widgets and set their static state
 		

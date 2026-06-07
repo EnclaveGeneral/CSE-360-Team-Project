@@ -1,0 +1,28 @@
+/* Main container */
+.dialog-pane {
+    -fx-background-color: #2b2b2b;
+    -fx-text-fill: #e0e0e0;
+    -fx-font-size: 14px;
+}
+
+/* Header */
+.dialog-pane .header-panel {
+    -fx-background-color: #3c3f41;
+}
+
+/* Header title */
+.dialog-pane .header-panel .label {
+    -fx-text-fill: white;
+}
+
+/* Message text */
+.dialog-pane .content.label {
+    -fx-text-fill: #e0e0e0;
+}
+
+/* Buttons */
+.button-bar .button {
+    -fx-background-color: #3c3f41;
+    -fx-text-fill: #e0e0e0;
+    -fx-border-color: #555555;
+}

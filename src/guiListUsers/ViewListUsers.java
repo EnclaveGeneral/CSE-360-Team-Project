@@ -115,6 +115,9 @@ public class ViewListUsers {
 		// Create the Pane for the list of widgets and the Scene for the window
 		theRootPane = new Pane();
 		theListUsersScene = new Scene(theRootPane, width, height);
+		
+		// Enable dark mode
+		theListUsersScene.getStylesheets().add(ViewListUsers.class.getResource("/dark-theme.css").toExternalForm());
 
 		// GUI Area 1
 		label_PageTitle.setText("List All Users Page");

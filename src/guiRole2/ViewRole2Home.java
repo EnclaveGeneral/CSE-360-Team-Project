@@ -148,6 +148,9 @@ public class ViewRole2Home {
 		theRootPane = new Pane();
 		theRole2HomeScene = new Scene(theRootPane, width, height);	// Create the scene
 		
+		// Enable dark mode
+		theRole2HomeScene.getStylesheets().add(ViewRole2Home.class.getResource("/dark-theme.css").toExternalForm());
+		
 		// Set the title for the window
 		
 		// Populate the window with the title and other common widgets and set their static state

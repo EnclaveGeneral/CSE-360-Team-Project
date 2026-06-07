@@ -156,6 +156,10 @@ public class ViewFirstAdmin {
 		// Create the Pane for the list of widgets and the Scene for the window
 		theRootPane = new Pane();
 		theFirstAdminScene = new Scene(theRootPane, width, height);
+		
+		// Enable dark mode 
+		theFirstAdminScene.getStylesheets().add(ViewFirstAdmin.class.getResource("/dark-theme.css").toExternalForm());
+
 
 		// Label theScene with the name of the system startup screen
 		setupLabelUI(label_ApplicationTitle, "Arial", 32, width, Pos.CENTER, 0, 10);

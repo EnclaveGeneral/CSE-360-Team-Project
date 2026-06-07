@@ -63,6 +63,9 @@ public class ViewSetOnetimePassword {
     private ViewSetOnetimePassword() {
         theRootPane = new Pane();
         theSetOnetimePasswordScene = new Scene(theRootPane, width, height);
+        
+        // Enable dark mode
+        theSetOnetimePasswordScene.getStylesheets().add(ViewSetOnetimePassword.class.getResource("/dark-theme.css").toExternalForm());
 
         setupLabelUI(label_Title, "Arial", 28, width, Pos.CENTER, 0, 10);
         setupLabelUI(label_Instructions, "Arial", 16, width, Pos.CENTER, 0, 55);

@@ -80,6 +80,9 @@ public class ViewForcePasswordReset {
     private ViewForcePasswordReset() {
         theRootPane = new Pane();
         theForcePasswordResetScene = new Scene(theRootPane, width, height);
+        
+        // Enable dark mode
+        theForcePasswordResetScene.getStylesheets().add(ViewForcePasswordReset.class.getResource("/dark-theme.css").toExternalForm());
 
         setupLabelUI(label_Title, "Arial", 28, width, Pos.CENTER, 0, 10);
         setupLabelUI(label_Instructions, "Arial", 16, width, Pos.CENTER, 0, 55);

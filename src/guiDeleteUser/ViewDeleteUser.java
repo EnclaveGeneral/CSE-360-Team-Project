@@ -64,6 +64,9 @@ public class ViewDeleteUser {
 	private ViewDeleteUser() {
 		theRootPane = new Pane();
 		theDeleteUserScene = new Scene(theRootPane, width, height);
+		
+		// Enable dark mode
+		theDeleteUserScene.getStylesheets().add(ViewDeleteUser.class.getResource("/dark-theme.css").toExternalForm());
 
 		setupLabelUI(label_Title, "Arial", 28, width, Pos.CENTER, 0, 10);
 

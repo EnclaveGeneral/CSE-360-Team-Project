@@ -172,6 +172,9 @@ public class ViewNewAccount {
 		// Create the Pane for the list of widgets and the Scene for the window
 		theRootPane = new Pane();
 		theNewAccountScene = new Scene(theRootPane, width, height);
+		
+		// Enable dark mode
+		theNewAccountScene.getStylesheets().add(ViewNewAccount.class.getResource("/dark-theme.css").toExternalForm());
 
 		// Label the Panle with the name of the startup screen, centered at the top of the pane
 		setupLabelUI(label_ApplicationTitle, "Arial", 28, width, Pos.CENTER, 0, 5);

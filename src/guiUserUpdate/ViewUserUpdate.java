@@ -213,6 +213,9 @@ public class ViewUserUpdate {
 		// Create the Pane for the list of widgets and the Scene for the window
 		theRootPane = new Pane();
 		theUserUpdateScene = new Scene(theRootPane, width, height);
+		
+		// Enable dark mode
+		theUserUpdateScene.getStylesheets().add(ViewUserUpdate.class.getResource("/dark-theme.css").toExternalForm());
 
 		// Initialize the pop-up dialogs to an empty text filed.
 		dialogUpdateFirstName = new TextInputDialog("");
