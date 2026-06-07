@@ -1,10 +1,6 @@
 package database;
 
 import java.sql.*;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -116,7 +112,8 @@ public class Database {
 				+ "emailAddress VARCHAR(255), "
 				+ "adminRole BOOL DEFAULT FALSE, "
 				+ "newRole1 BOOL DEFAULT FALSE, "
-				+ "newRole2 BOOL DEFAULT FALSE)";
+				+ "newRole2 BOOL DEFAULT FALSE,"
+				+ "onetimePassword VARCHAR(255) DEFAULT '')";
 		statement.execute(userTable);
 		
 		// Create the invitation codes table
@@ -566,6 +563,89 @@ public class Database {
 		return;
 	}
 	
+	/*******
+	 * <p> Method: void deleteUserAccount(String username) </p>
+	 * 
+	 * <p> Description: Delete a user level account from the system </p>
+	 * 
+	 * @param 
+	 * 
+	 * 
+	 */
+	// Remove and delete a user account from the system database 
+	public void deleteUserAccount(String username) {
+		String query = "DELETE FROM userDB where userName = ?";
+		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+			pstmt.setString(1,  username);
+			pstmt.executeUpdate();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	/*******
+	 * <p> Method: void setOnetimePassword(String username, String otp) </p>
+	 *
+	 * <p> Description: Stores a one-time password for the specified user. The next time
+	 * this user logs in with this password, they will be forced to set a new one. </p>
+	 *
+	 * @param username the username of the user
+	 * @param otp the one-time password to store
+	 */
+	public void setOnetimePassword(String username, String otp) {
+	    String query = "UPDATE userDB SET onetimePassword = ? WHERE userName = ?";
+	    try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+	        pstmt.setString(1, otp);
+	        pstmt.setString(2, username);
+	        pstmt.executeUpdate();
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    }
+	}
+
+	/*******
+	 * <p> Method: boolean isOnetimePassword(String username, String password) </p>
+	 *
+	 * <p> Description: Returns true if the supplied password matches the stored one-time
+	 * password for this user. </p>
+	 *
+	 * @param username the username of the user
+	 * @param password the password to check
+	 * @return true if it matches the one-time password, else false
+	 */
+	public boolean isOnetimePassword(String username, String password) {
+	    String query = "SELECT onetimePassword FROM userDB WHERE userName = ?";
+	    try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+	        pstmt.setString(1, username);
+	        ResultSet rs = pstmt.executeQuery();
+	        if (rs.next()) {
+	            String otp = rs.getString("onetimePassword");
+	            return otp != null && !otp.isEmpty() && otp.equals(password);
+	        }
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    }
+	    return false;
+	}
+
+	/*******
+	 * <p> Method: void clearOnetimePassword(String username) </p>
+	 *
+	 * <p> Description: Clears the one-time password for the specified user after it has
+	 * been used. </p>
+	 *
+	 * @param username the username of the user
+	 */
+	public void clearOnetimePassword(String username) {
+	    String query = "UPDATE userDB SET onetimePassword = '' WHERE userName = ?";
+	    try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+	        pstmt.setString(1, username);
+	        pstmt.executeUpdate();
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    }
+	}
+
 	
 	/*******
 	 * <p> Method: String getFirstName(String username) </p>
