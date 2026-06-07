@@ -99,6 +99,14 @@ public class ControllerUserLogin {
     		return;
     	}
 		// System.out.println("*** Password is valid for this user");
+    	// Check if this is a one-time password — force reset if so
+    	if (theDatabase.isOnetimePassword(username, password)) {
+    	    theDatabase.clearOnetimePassword(username);
+    	    guiForcePasswordReset.ViewForcePasswordReset
+    	            .displayForcePasswordReset(theStage, username);
+    	    return;
+    	}
+
 		
 		// Establish this user's details
     	User user = new User(username, password, theDatabase.getCurrentFirstName(), 

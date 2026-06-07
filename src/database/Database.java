@@ -645,6 +645,26 @@ public class Database {
 	        e.printStackTrace();
 	    }
 	}
+	
+	/*******
+	 * <p> Method: void updatePassword(String username, String newPassword) </p>
+	 * 
+	 * <p> Description: Update the password for a user account  
+	 * @param username
+	 * @param newPassword
+	 */
+	
+	public void updatePassword(String username, String newPassword) {
+	    String query = "UPDATE userDB SET password = ? WHERE userName = ?";
+	    try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+	        pstmt.setString(1, newPassword);
+	        pstmt.setString(2, username);
+	        pstmt.executeUpdate();
+	        currentPassword = newPassword;
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    }
+	}
 
 	
 	/*******
