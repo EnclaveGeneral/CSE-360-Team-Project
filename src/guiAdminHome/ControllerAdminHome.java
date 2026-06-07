@@ -169,6 +169,14 @@ public class ControllerAdminHome {
 			ViewAdminHome.alertEmailError.showAndWait();
 			return true;
 		}
+		
+		if(!emailAddress.contains("@gmail.com")) {
+			ViewAdminHome.alertEmailError.setContentText(
+					"must be a real email");
+			ViewAdminHome.alertEmailError.showAndWait();
+			return true;
+		}
+		
 		return false;
 	}
 	
