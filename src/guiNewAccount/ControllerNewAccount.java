@@ -6,6 +6,8 @@ import userNameRecognizer.UserNameRecognizer;
 import database.Database;
 import entityClasses.User;
 
+import javafx.scene.paint.Color;
+
 /*******
  * <p> Title: ControllerNewAccount Class. </p>
  * 
@@ -50,6 +52,47 @@ public class ControllerNewAccount {
 	// Reference for the in-memory database so this package has access
 	private static Database theDatabase = applicationMain.FoundationsMain.database;
 	
+	// Store user input password 
+	private static String userPassword = "";
+	
+	protected static void setUserPassword() {
+	    userPassword = ViewNewAccount.text_Password1.getText();
+
+	    // Check max length first
+	    if (userPassword.length() > 24) {
+	        ViewNewAccount.label_ReqShortEnough.setText("No more than 24 characters - Not satisfied");
+	        ViewNewAccount.label_ReqShortEnough.setTextFill(javafx.scene.paint.Color.RED);
+	    } else {
+	        ViewNewAccount.label_ReqShortEnough.setText("No more than 24 characters - Satisfied");
+	        ViewNewAccount.label_ReqShortEnough.setTextFill(javafx.scene.paint.Color.GREEN);
+	    }
+
+	    // Run the evaluator
+	    passwordPopUpWindow.Model.evaluatePassword(userPassword);
+
+	    // Update labels
+	    ViewNewAccount.label_ReqUpperCase.setTextFill(passwordPopUpWindow.Model.foundUpperCase ? javafx.scene.paint.Color.GREEN : javafx.scene.paint.Color.RED);
+	    ViewNewAccount.label_ReqUpperCase.setText("At least one upper case letter - " +
+	        (passwordPopUpWindow.Model.foundUpperCase ? "Satisfied" : "Not yet satisfied"));
+
+	    ViewNewAccount.label_ReqLowerCase.setTextFill(passwordPopUpWindow.Model.foundLowerCase ? javafx.scene.paint.Color.GREEN : javafx.scene.paint.Color.RED);
+	    ViewNewAccount.label_ReqLowerCase.setText("At least one lower case letter - " +
+	        (passwordPopUpWindow.Model.foundLowerCase ? "Satisfied" : "Not yet satisfied"));
+
+	    ViewNewAccount.label_ReqNumericDigit.setTextFill(passwordPopUpWindow.Model.foundNumericDigit ? javafx.scene.paint.Color.GREEN : javafx.scene.paint.Color.RED);
+	    ViewNewAccount.label_ReqNumericDigit.setText("At least one numeric digit - " +
+	        (passwordPopUpWindow.Model.foundNumericDigit ? "Satisfied" : "Not yet satisfied"));
+
+	    ViewNewAccount.label_ReqSpecialChar.setTextFill(passwordPopUpWindow.Model.foundSpecialChar ? javafx.scene.paint.Color.GREEN : javafx.scene.paint.Color.RED);
+	    ViewNewAccount.label_ReqSpecialChar.setText("At least one special character - " +
+	        (passwordPopUpWindow.Model.foundSpecialChar ? "Satisfied" : "Not yet satisfied"));
+
+	    ViewNewAccount.label_ReqLongEnough.setTextFill(passwordPopUpWindow.Model.foundLongEnough ? javafx.scene.paint.Color.GREEN : javafx.scene.paint.Color.RED);
+	    ViewNewAccount.label_ReqLongEnough.setText("At least 8 characters - " +
+	        (passwordPopUpWindow.Model.foundLongEnough ? "Satisfied" : "Not yet satisfied"));
+	}
+	
+	
 	/**********
 	 * <p> Method: public doCreateUser() </p>
 	 * 
@@ -80,6 +123,15 @@ public class ControllerNewAccount {
 		}
 				
 		String password = ViewNewAccount.text_Password1.getText();
+		
+		String passwordError = passwordPopUpWindow.Model.evaluatePassword(password);
+		if (passwordError.length() > 0) {
+		    ViewNewAccount.alertUsernamePasswordError.setTitle("Password error");
+		    ViewNewAccount.alertUsernamePasswordError.setHeaderText("Password does not meet requirements");
+		    ViewNewAccount.alertUsernamePasswordError.setContentText(passwordError);
+		    ViewNewAccount.alertUsernamePasswordError.showAndWait();
+		    return;
+		}
 		
 		// Display key information to the log
 		System.out.println("** Account for Username: " + username + "; theInvitationCode: "+

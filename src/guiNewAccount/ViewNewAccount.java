@@ -9,6 +9,7 @@ import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.layout.Pane;
+import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import database.Database;
@@ -54,9 +55,20 @@ public class ViewNewAccount {
     protected static PasswordField text_Password2 = new PasswordField();
     protected static Button button_UserSetup = new Button("User Setup");
     protected static TextField text_Invitation = new TextField();
+    
+    // Add password error and correction fields
+ 	protected static Label label_ReqUpperCase = new Label();
+ 	protected static Label label_ReqLowerCase = new Label();
+ 	protected static Label label_ReqNumericDigit = new Label();
+ 	protected static Label label_ReqSpecialChar = new Label();
+ 	protected static Label label_ReqLongEnough = new Label();
+ 	protected static Label label_ReqShortEnough = new Label();
+
 
 	// This alert is used should the invitation code be invalid
     protected static Alert alertInvitationCodeIsInvalid = new Alert(AlertType.INFORMATION);
+    
+    
 
 	// This alert is used should the user enter two passwords that do not match
 	protected static Alert alertUsernamePasswordError = new Alert(AlertType.INFORMATION);
@@ -136,7 +148,8 @@ public class ViewNewAccount {
     	// Place all of the established GUI elements into the pane
     	theRootPane.getChildren().clear();
     	theRootPane.getChildren().addAll(label_NewUserCreation, label_NewUserLine, text_Username,
-    			text_Password1, text_Password2, button_UserSetup, button_Quit);    	
+    			text_Password1, text_Password2, button_UserSetup, button_Quit, label_ReqUpperCase, label_ReqLowerCase, label_ReqNumericDigit,
+			    label_ReqSpecialChar, label_ReqLongEnough, label_ReqShortEnough);    	
 
 		// Set the title for the window, display the page, and wait for the Admin to do something
 		theStage.setTitle("CSE 360 Foundation Code: New User Account Setup");	
@@ -177,8 +190,36 @@ public class ViewNewAccount {
 		setupTextUI(text_Password1, "Arial", 18, 300, Pos.BASELINE_LEFT, 50, 210, true);
 		text_Password1.setPromptText("Enter the Password");
 		
+		text_Password1.textProperty().addListener((_, _, _)
+			    -> {ControllerNewAccount.setUserPassword(); });
+		
+		// Password requirement labels - shown between password1 and password2
+		setupLabelUI(label_ReqUpperCase, "Arial", 14, width, Pos.BASELINE_LEFT, 50, 250);
+		label_ReqUpperCase.setText("At least one upper case letter - Not yet satisfied");
+		label_ReqUpperCase.setTextFill(Color.RED);
+	
+		setupLabelUI(label_ReqLowerCase, "Arial", 14, width, Pos.BASELINE_LEFT, 50, 265);
+		label_ReqLowerCase.setText("At least one lower case letter - Not yet satisfied");
+		label_ReqLowerCase.setTextFill(Color.RED);
+	
+		setupLabelUI(label_ReqNumericDigit, "Arial", 14, width, Pos.BASELINE_LEFT, 50, 280);
+		label_ReqNumericDigit.setText("At least one numeric digit - Not yet satisfied");
+		label_ReqNumericDigit.setTextFill(Color.RED);
+	
+		setupLabelUI(label_ReqSpecialChar, "Arial", 14, width, Pos.BASELINE_LEFT, 50, 295);
+		label_ReqSpecialChar.setText("At least one special character - Not yet satisfied");
+		label_ReqSpecialChar.setTextFill(Color.RED);
+	
+		setupLabelUI(label_ReqLongEnough, "Arial", 14, width, Pos.BASELINE_LEFT, 50, 310);
+		label_ReqLongEnough.setText("At least 8 characters - Not yet satisfied");
+		label_ReqLongEnough.setTextFill(Color.RED);
+	
+		setupLabelUI(label_ReqShortEnough, "Arial", 14, width, Pos.BASELINE_LEFT, 50, 325);
+		label_ReqShortEnough.setText("No more than 24 characters - Not yet satisfied");
+		label_ReqShortEnough.setTextFill(Color.RED);
+		
 		// Establish the text input operand field to confirm the password
-		setupTextUI(text_Password2, "Arial", 18, 300, Pos.BASELINE_LEFT, 50, 260, true);
+		setupTextUI(text_Password2, "Arial", 18, 300, Pos.BASELINE_LEFT, 50, 365, true);
 		text_Password2.setPromptText("Enter the Password Again");
 		
 		// If the invitation code is wrong, this alert dialog will tell the user
@@ -192,13 +233,14 @@ public class ViewNewAccount {
 		alertUsernamePasswordError.setContentText("Correct the passwords and try again.");
 
         // Set up the account creation and login
-        setupButtonUI(button_UserSetup, "Dialog", 18, 200, Pos.CENTER, 475, 210);
+        setupButtonUI(button_UserSetup, "Dialog", 18, 200, Pos.CENTER, 475, 365);
         button_UserSetup.setOnAction((_) -> {ControllerNewAccount.doCreateUser(); });
 		
         // Enable the user to quit the application
         setupButtonUI(button_Quit, "Dialog", 18, 250, Pos.CENTER, 300, 540);
         button_Quit.setOnAction((_) -> {ControllerNewAccount.performQuit(); });
 	}
+	
 	
 	
 	/*-********************************************************************************************
