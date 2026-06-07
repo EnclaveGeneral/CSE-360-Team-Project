@@ -93,19 +93,19 @@ public class ControllerUserLogin {
     	String actualPassword = theDatabase.getCurrentPassword();
     	
     	if (password.compareTo(actualPassword) != 0) {
-    		ViewUserLogin.alertUsernamePasswordError.setContentText(
-    				"Incorrect username/password. Try again!");
-    		ViewUserLogin.alertUsernamePasswordError.showAndWait();
-    		return;
-    	}
-		// System.out.println("*** Password is valid for this user");
-    	// Check if this is a one-time password — force reset if so
-    	if (theDatabase.isOnetimePassword(username, password)) {
-    	    theDatabase.clearOnetimePassword(username);
-    	    guiForcePasswordReset.ViewForcePasswordReset
-    	            .displayForcePasswordReset(theStage, username);
+    	    // Password doesn't match the real password — check if it's a one-time password
+    	    if (theDatabase.isOnetimePassword(username, password)) {
+    	        theDatabase.clearOnetimePassword(username);
+    	        guiForcePasswordReset.ViewForcePasswordReset
+    	                .displayForcePasswordReset(theStage, username);
+    	        return;
+    	    }
+    	    ViewUserLogin.alertUsernamePasswordError.setContentText(
+    	            "Incorrect username/password. Try again!");
+    	    ViewUserLogin.alertUsernamePasswordError.showAndWait();
     	    return;
     	}
+    	
 
 		
 		// Establish this user's details
