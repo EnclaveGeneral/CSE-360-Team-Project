@@ -135,6 +135,13 @@ public class ControllerAdminHome {
 		guiListUsers.ViewListUsers.displayListUsers(ViewAdminHome.theStage, ViewAdminHome.theUser);
 	}
 	
+	/**
+	 * launches the forum
+	 */
+	protected static void forum() {
+		guiForum.ViewForum.displayForum(ViewAdminHome.theStage, ViewAdminHome.theUser);
+	}
+	
 	/**********
 	 * <p> 
 	 * 
