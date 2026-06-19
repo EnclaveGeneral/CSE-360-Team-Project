@@ -11,6 +11,7 @@ import javafx.stage.Stage;
 import database.Database;
 //import database.Database;
 import entityClasses.User;
+import guiAdminHome.ControllerAdminHome;
 
 
 /*******
@@ -56,7 +57,7 @@ public class ViewRole2Home {
 	// GUI ARea 2: This is a stub, so there are no widgets here.  For an actual role page, this are
 	// would contain the widgets needed for the user to play the assigned role.
 	
-	
+	protected static Button button_forum = new Button("forum");
 	
 	// This is a separator and it is used to partition the GUI for various tasks
 	protected static Line line_Separator4 = new Line(20, 525, width-20,525);
@@ -169,6 +170,9 @@ public class ViewRole2Home {
 		
 			// This is a stub, so this area is empty
 		
+		setupButtonUI(button_forum, "Dialog", 16, 250, Pos.CENTER, 400, 270);
+		button_forum.setOnAction((_) -> {ControllerRole2Home.forum(); });
+		
 		
 		// GUI Area 3
         setupButtonUI(button_Logout, "Dialog", 18, 250, Pos.CENTER, 20, 540);
@@ -182,7 +186,7 @@ public class ViewRole2Home {
 		// Place all of the widget items into the Root Pane's list of children
         theRootPane.getChildren().addAll(
 			label_PageTitle, label_UserDetails, button_UpdateThisUser, line_Separator1,
-	        line_Separator4, button_Logout, button_Quit);
+	        line_Separator4, button_Logout, button_Quit, button_forum);
 	}
 	
 	
