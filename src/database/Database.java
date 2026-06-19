@@ -1,11 +1,25 @@
 package database;
 
+import java.io.ByteArrayOutputStream;
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import javafx.embed.swing.SwingFXUtils;
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 
 import entityClasses.User;
+import guiForum.comment;
+import guiForum.png;
+import javafx.scene.image.Image;
 
 /*******
  * <p> Title: Database Class. </p>
@@ -84,7 +98,7 @@ public class Database {
 			connection = DriverManager.getConnection(DB_URL, USER, PASS);
 			statement = connection.createStatement(); 
 			// You can use this command to clear the database and restart from fresh.
-			statement.execute("DROP ALL OBJECTS");
+			//statement.execute("DROP ALL OBJECTS");
 
 			createTables();  // Create the necessary tables if they don't exist
 		} catch (ClassNotFoundException e) {
@@ -1184,5 +1198,315 @@ public class Database {
 		} catch(SQLException se){ 
 			se.printStackTrace(); 
 		} 
+	}
+
+	/**
+	 * adds an image
+	 * 
+	 * @param user
+	 * @param filename
+	 * @param pic
+	 * @param comments
+	 * @param row
+	 * @param col
+	 */
+	public void saveImageEntry(String user, String filename, Image pic, ArrayList<comment> comments, int row, int col) {
+	    String insertImageSql = "INSERT INTO images (username, filename, image_data, row_position, col_position) VALUES (?, ?, ?, ?, ?)";
+	    String insertCommentSql = "INSERT INTO comments (image_id, comment_text, comment_user) VALUES (?, ?, ?)";
+
+	    try (
+	        PreparedStatement imageStmt = connection.prepareStatement(insertImageSql, Statement.RETURN_GENERATED_KEYS);
+	    ) {
+	        imageStmt.setString(1, user);
+	        imageStmt.setString(2, filename);
+
+	        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+	        BufferedImage bImage = SwingFXUtils.fromFXImage(pic, null);
+	        ImageIO.write(bImage, "png", baos);
+	        byte[] imageBytes = baos.toByteArray();
+	        ByteArrayInputStream bais = new ByteArrayInputStream(imageBytes);
+	        imageStmt.setBinaryStream(3, bais, imageBytes.length);
+
+	        imageStmt.setInt(4, row);
+	        imageStmt.setInt(5, col);
+
+	        imageStmt.executeUpdate();
+
+	        // get image ID
+	        int imageId = -1;
+	        try (ResultSet generatedKeys = imageStmt.getGeneratedKeys()) {
+	            if (generatedKeys.next()) {
+	                imageId = generatedKeys.getInt(1);
+	            } else {
+	                throw new SQLException("Creating image failed, no ID obtained.");
+	            }
+	        }
+
+	        // insert comments linked to image ID
+	        if (comments != null && !comments.isEmpty()) {
+	            try (PreparedStatement commentStmt = connection.prepareStatement(insertCommentSql)) {
+	                for (comment c : comments) {
+	                    commentStmt.setInt(1, imageId);
+	                    commentStmt.setString(2, c.get_message());
+	                    commentStmt.setString(3, c.get_user());
+	                    commentStmt.addBatch();
+	                }
+	                commentStmt.executeBatch();
+	            }
+	        }
+
+	    } catch (SQLException | IOException e) {
+	        e.printStackTrace();
+	    }
+	}
+	
+	/**
+	 * deletes an image
+	 * 
+	 * @param filename
+	 */
+	public void deleteImageEntry(String filename) {
+	    String sql = "DELETE FROM images WHERE filename = ?";
+	    try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+	        pstmt.setString(1, filename);
+	        int affectedRows = pstmt.executeUpdate();
+	        System.out.println("Deleted rows: " + affectedRows);
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    }
+	}
+
+	/**
+	 * what i use to store hashmap
+	 */
+	public void createImageEntriesTable() {
+	    String createImagesTable = "CREATE TABLE IF NOT EXISTS images (" +
+	                               "id INT AUTO_INCREMENT PRIMARY KEY, " +
+	                               "username VARCHAR(255) NOT NULL, " +
+	                               "filename VARCHAR(255) NOT NULL, " +
+	                               "image_data BLOB, " +
+	                               "row_position INT, " +
+	                               "col_position INT" +
+	                               ")";
+	    // stores the arraylist of comments
+	    String createCommentsTable = "CREATE TABLE IF NOT EXISTS comments (" +
+	                                 "id INT AUTO_INCREMENT PRIMARY KEY, " +
+	                                 "image_id INT NOT NULL, " +
+	                                 "comment_text VARCHAR(1000), " +
+	                                 "comment_user VARCHAR(255), " +
+	                                 "FOREIGN KEY (image_id) REFERENCES images(id) ON DELETE CASCADE" +
+	                                 ")";
+	    
+	    try (Statement stmt = connection.createStatement()) {
+	        stmt.execute(createImagesTable);
+	        stmt.execute(createCommentsTable);
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    }
+	}
+	
+	/**
+	 * grabs the hashmap
+	 * 
+	 * @return the hashmap
+	 */
+	public HashMap<png, ArrayList<comment>> loadImageEntries() {
+	    HashMap<png, ArrayList<comment>> loadedEntries = new LinkedHashMap<>();
+
+	    // load images
+	    String loadImagesSql = "SELECT id, username, filename, image_data, row_position, col_position FROM images";
+	    Map<Integer, png> imageMap = new HashMap<>();
+
+	    try (PreparedStatement imgStmt = connection.prepareStatement(loadImagesSql);
+	         ResultSet rsImages = imgStmt.executeQuery()) {
+
+	        while (rsImages.next()) {
+	            int imageId = rsImages.getInt("id");
+	            String username = rsImages.getString("username");
+	            String filename = rsImages.getString("filename");
+	            Blob imageBlob = rsImages.getBlob("image_data");
+	            int row = rsImages.getInt("row_position");
+	            int col = rsImages.getInt("col_position");
+
+	            InputStream imageStream = imageBlob.getBinaryStream();
+	            Image img = new Image(imageStream);
+
+	            png pngObj = new png(username, img, filename, row, col);
+	            imageMap.put(imageId, pngObj);
+
+	            loadedEntries.put(pngObj, new ArrayList<>());
+	        }
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    }
+
+	    // load comments and add png
+	    String loadCommentsSql = "SELECT image_id, comment_text, comment_user FROM comments";
+	    try (PreparedStatement commentStmt = connection.prepareStatement(loadCommentsSql);
+	         ResultSet rsComments = commentStmt.executeQuery()) {
+
+	        while (rsComments.next()) {
+	            int imageId = rsComments.getInt("image_id");
+	            String commentText = rsComments.getString("comment_text");
+	            String commentUser = rsComments.getString("comment_user");
+
+	            png pngObj = imageMap.get(imageId);
+	            if (pngObj != null) {
+	                comment commentObj = new comment(commentText, commentUser);
+	                loadedEntries.get(pngObj).add(commentObj);
+	            }
+	        }
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    }
+
+	    return loadedEntries;
+	}
+	
+	/**
+	 * adds a comment
+	 * 
+	 * @param forum_data_view
+	 * @param img
+	 * @param newComment
+	 */
+	public void add_comment(HashMap<png, ArrayList<comment>> forum_data_view, png img, comment newComment) {
+	    ArrayList<comment> list = forum_data_view.get(img);
+	    if (list == null) {
+	        list = new ArrayList<>();
+	        forum_data_view.put(img, list);
+	    }
+	    list.add(newComment);
+
+	    try {
+	        // find image id
+	        String findImageIdSql = "SELECT id FROM images WHERE filename = ? AND username = ?";
+	        int imageId = -1;
+	        try (PreparedStatement findStmt = connection.prepareStatement(findImageIdSql)) {
+	            findStmt.setString(1, img.get_filename());
+	            findStmt.setString(2, img.get_user());
+	            try (ResultSet rs = findStmt.executeQuery()) {
+	                if (rs.next()) {
+	                    imageId = rs.getInt("id");
+	                } 
+	                else {
+	                    // if no image exists then insert one
+	                    String insertImageSql = "INSERT INTO images (username, filename, image_data, row_position, col_position) VALUES (?, ?, ?, ?, ?)";
+	                    try (PreparedStatement insertStmt = connection.prepareStatement(insertImageSql, Statement.RETURN_GENERATED_KEYS)) {
+	                        insertStmt.setString(1, img.get_user());
+	                        insertStmt.setString(2, img.get_filename());
+	                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+	                        BufferedImage bImage = SwingFXUtils.fromFXImage(img.get_pic(), null);
+	                        ImageIO.write(bImage, "png", baos);
+	                        byte[] imageBytes = baos.toByteArray();
+	                        ByteArrayInputStream bais = new ByteArrayInputStream(imageBytes);
+	                        insertStmt.setBinaryStream(3, bais, imageBytes.length);
+
+	                        insertStmt.setInt(4, img.get_row());
+	                        insertStmt.setInt(5, img.get_col());
+
+	                        insertStmt.executeUpdate();
+
+	                        try (ResultSet generatedKeys = insertStmt.getGeneratedKeys()) {
+	                            if (generatedKeys.next()) {
+	                                imageId = generatedKeys.getInt(1);
+	                            } else {
+	                                throw new SQLException("Creating image failed, no ID obtained.");
+	                            }
+	                        }
+	                    }
+	                }
+	            }
+	        }
+
+	        if (imageId != -1) {
+	            // insert comment
+	            String insertCommentSql = "INSERT INTO comments (image_id, comment_text, comment_user) VALUES (?, ?, ?)";
+	            try (PreparedStatement commentStmt = connection.prepareStatement(insertCommentSql)) {
+	                commentStmt.setInt(1, imageId);
+	                commentStmt.setString(2, newComment.get_message());
+	                commentStmt.setString(3, newComment.get_user());
+	                commentStmt.executeUpdate();
+	            }
+	        } 
+	        else {
+	            System.err.println("Failed to find or insert image for comment.");
+	        }
+	    } catch (SQLException | IOException e) {
+	        e.printStackTrace();
+	    }
+	}
+	
+	/**
+	 * deletes a comment
+	 * 
+	 * @param forum_data_view
+	 * @param img
+	 * @param commentToDelete
+	 */
+	public void delete_comment(HashMap<png, ArrayList<comment>> forum_data_view, png img, comment commentToDelete) {
+	    try {
+	        // find image id
+	        String findImageIdSql = "SELECT id FROM images WHERE filename = ? AND username = ?";
+	        int imageId = -1;
+	        try (PreparedStatement findStmt = connection.prepareStatement(findImageIdSql)) {
+	            findStmt.setString(1, img.get_filename());
+	            findStmt.setString(2, img.get_user());
+	            try (ResultSet rs = findStmt.executeQuery()) {
+	                if (rs.next()) {
+	                    imageId = rs.getInt("id");
+	                } 
+	                else {
+	                    System.err.println("Image not found for deletion.");
+	                    return;
+	                }
+	            }
+	        }
+
+	        if (imageId != -1) {
+	            // find comment id
+	            String findCommentIdSql = "SELECT id FROM comments WHERE image_id = ? AND comment_text = ? AND comment_user = ?";
+	            int commentId = -1;
+	            try (PreparedStatement findCommentStmt = connection.prepareStatement(findCommentIdSql)) {
+	                findCommentStmt.setInt(1, imageId);
+	                findCommentStmt.setString(2, commentToDelete.get_message());
+	                findCommentStmt.setString(3, commentToDelete.get_user());
+	                try (ResultSet rsComment = findCommentStmt.executeQuery()) {
+	                    if (rsComment.next()) {
+	                        commentId = rsComment.getInt("id");
+	                    } 
+	                    else {
+	                        System.err.println("Comment not found for deletion.");
+	                        return;
+	                    }
+	                }
+	            }
+
+	            // delete comment
+	            if (commentId != -1) {
+	                String deleteCommentSql = "DELETE FROM comments WHERE id = ?";
+	                try (PreparedStatement deleteStmt = connection.prepareStatement(deleteCommentSql)) {
+	                    deleteStmt.setInt(1, commentId);
+	                    int affectedRows = deleteStmt.executeUpdate();
+	                    if (affectedRows > 0) {
+	                        System.out.println("Comment deleted successfully.");
+	                    } 
+	                    else {
+	                        System.err.println("Failed to delete comment.");
+	                    }
+	                }
+
+	                ArrayList<comment> commentList = forum_data_view.get(img);
+	                if (commentList != null) {
+	                    commentList.removeIf(c -> 
+	                        c.get_message().equals(commentToDelete.get_message()) &&
+	                        c.get_user().equals(commentToDelete.get_user())
+	                    );
+	                }
+	            }
+	        }
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    }
 	}
 }
