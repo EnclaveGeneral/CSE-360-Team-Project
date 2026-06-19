@@ -1,5 +1,6 @@
 package guiRole1;
 
+import guiAdminHome.ViewAdminHome;
 
 /*******
  * <p> Title: ControllerRole1Home Class. </p>
@@ -72,5 +73,9 @@ public class ControllerRole1Home {
 	 */	
 	protected static void performQuit() {
 		System.exit(0);
+	}
+	
+	protected static void forum() {
+		guiForum.ViewForum.displayForum(ViewRole1Home.theStage, ViewRole1Home.theUser);
 	}
 }

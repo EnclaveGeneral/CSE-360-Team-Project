@@ -78,7 +78,7 @@ public class ViewRole1Home {
 	protected static Pane theRootPane;			// The Pane that holds all the GUI widgets
 	protected static User theUser;				// The current logged in User
 	
-
+	protected static Button button_forum = new Button("forum");
 	private static Scene theViewRole1HomeScene;	// The shared Scene each invocation populates
 	protected static final int theRole = 2;		// Admin: 1; Role1: 2; Role2: 3
 
@@ -169,7 +169,8 @@ public class ViewRole1Home {
 		// GUI Area 2
 		
 			// This is a stub, so this area is empty
-		
+		setupButtonUI(button_forum, "Dialog", 16, 250, Pos.CENTER, 400, 270);
+		button_forum.setOnAction((_) -> {ControllerRole1Home.forum(); });
 		
 		// GUI Area 3
         setupButtonUI(button_Logout, "Dialog", 18, 250, Pos.CENTER, 20, 540);
@@ -183,7 +184,7 @@ public class ViewRole1Home {
 		// Place all of the widget items into the Root Pane's list of children
          theRootPane.getChildren().addAll(
 			label_PageTitle, label_UserDetails, button_UpdateThisUser, line_Separator1,
-	        line_Separator4, button_Logout, button_Quit);
+	        line_Separator4, button_Logout, button_Quit, button_forum);
 }
 	
 	
