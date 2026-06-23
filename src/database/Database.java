@@ -16,6 +16,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+import entityClasses.Post;
+import entityClasses.Reply;
 import entityClasses.User;
 import guiForum.comment;
 import guiForum.png;
@@ -136,6 +138,26 @@ public class Database {
 	    		+ "emailAddress VARCHAR(255), "
 	            + "role VARCHAR(10))";
 	    statement.execute(invitationCodesTable);
+	    
+	    // Create the post table 
+	    String postTable = "CREATE TABLE IF NOT EXISTS postDB ("
+	    		+ "postId INT AUTO_INCREMENT PRIMARY KEY,"
+	    		+ "authorUsername VARCHAR(255), "
+	    		+ "title VARCHAR(255), "
+	    		+ "body VARCHAR(2000), "
+	    		+ "timestamp VARCHAR(255), "
+	    		+ "isPinned BOOL DEFAULT FALSE )";
+	    statement.execute(postTable);
+	    
+	    // Create the reply table 
+	    String replyTable = "CREATE TABLE IF NOT EXISTS replyDB ("
+	    		+ "replyId INT AUTO_INCREMENT PRIMARY KEY, "
+	    		+ "parentPostId INT, "
+	    		+ "authorUsername VARCHAR(255), "
+	    		+ "body VARCHAR(2000), "
+	    		+ "timestamp VARCHAR(255), "
+	    		+ "isAccepted BOOL DEFAULT FALSE )";
+	    statement.execute(replyTable);
 	}
 
 
@@ -1509,4 +1531,583 @@ public class Database {
 	        e.printStackTrace();
 	    }
 	}
+	
+	// =========================================================
+	// DISCUSSION BOARD — posts & replies
+	// =========================================================
+
+	/*******
+	 * <p> Method: createDiscussionTables </p>
+	 *
+	 * <p> Description: Creates the posts and replies tables if they do not already exist.
+	 * Called once at startup from FoundationsMain or from ViewDiscussion's constructor. </p>
+	 */
+	public void createDiscussionTables() {
+	    String postsSql = "CREATE TABLE IF NOT EXISTS posts (" +
+	            "id INT AUTO_INCREMENT PRIMARY KEY, " +
+	            "author VARCHAR(255) NOT NULL, " +
+	            "title VARCHAR(255) NOT NULL, " +
+	            "body CLOB, " +
+	            "post_type VARCHAR(10) DEFAULT 'text', " +
+	            "image_filename VARCHAR(255), " +
+	            "image_data BLOB, " +
+	            "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)";
+
+	    String repliesSql = "CREATE TABLE IF NOT EXISTS replies (" +
+	            "id INT AUTO_INCREMENT PRIMARY KEY, " +
+	            "post_id INT NOT NULL, " +
+	            "author VARCHAR(255) NOT NULL, " +
+	            "body CLOB NOT NULL, " +
+	            "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
+	            "FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE)";
+
+	    try (Statement stmt = connection.createStatement()) {
+	        stmt.execute(postsSql);
+	        stmt.execute(repliesSql);
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    }
+	}
+
+	/*******
+	 * <p> Method: saveTextPost </p>
+	 *
+	 * <p> Description: Inserts a new text-based post into the posts table. </p>
+	 *
+	 * @param author   the username of the poster
+	 * @param title    the post title
+	 * @param body     the post body text
+	 * @return the generated post id, or -1 on failure
+	 */
+	public int saveTextPost(String author, String title, String body) {
+	    String sql = "INSERT INTO posts (author, title, body, post_type) VALUES (?, ?, ?, 'text')";
+	    try (PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+	        ps.setString(1, author);
+	        ps.setString(2, title);
+	        ps.setString(3, body);
+	        ps.executeUpdate();
+	        try (ResultSet keys = ps.getGeneratedKeys()) {
+	            if (keys.next()) return keys.getInt(1);
+	        }
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    }
+	    return -1;
+	}
+
+	/*******
+	 * <p> Method: saveImagePost </p>
+	 *
+	 * <p> Description: Inserts a new image-based post into the posts table, storing the
+	 * image as a BLOB alongside an optional caption in body. </p>
+	 *
+	 * @param author    the username of the poster
+	 * @param title     the post title / caption
+	 * @param filename  the original filename of the image
+	 * @param img       the JavaFX Image object to persist
+	 * @return the generated post id, or -1 on failure
+	 */
+	public int saveImagePost(String author, String title, String filename, javafx.scene.image.Image img) {
+	    String sql = "INSERT INTO posts (author, title, post_type, image_filename, image_data) VALUES (?, ?, 'image', ?, ?)";
+	    try (PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+	        ps.setString(1, author);
+	        ps.setString(2, title);
+	        ps.setString(3, filename);
+
+	        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+	        java.awt.image.BufferedImage bImg = SwingFXUtils.fromFXImage(img, null);
+	        ImageIO.write(bImg, "png", baos);
+	        byte[] bytes = baos.toByteArray();
+	        ps.setBinaryStream(4, new ByteArrayInputStream(bytes), bytes.length);
+
+	        ps.executeUpdate();
+	        try (ResultSet keys = ps.getGeneratedKeys()) {
+	            if (keys.next()) return keys.getInt(1);
+	        }
+	    } catch (SQLException | IOException e) {
+	        e.printStackTrace();
+	    }
+	    return -1;
+	}
+
+	/*******
+	 * <p> Method: getAllPosts </p>
+	 *
+	 * <p> Description: Loads all posts ordered newest-first. Each post's image_data BLOB
+	 * is decoded into a JavaFX Image where applicable. </p>
+	 *
+	 * @return an ordered List of DiscussionPost objects
+	 */
+	public java.util.List<entityClasses.DiscussionPost> getAllPosts() {
+	    java.util.List<entityClasses.DiscussionPost> list = new java.util.ArrayList<>();
+	    String sql = "SELECT id, author, title, body, post_type, image_filename, image_data, created_at FROM posts ORDER BY created_at DESC";
+	    try (PreparedStatement ps = connection.prepareStatement(sql);
+	         ResultSet rs = ps.executeQuery()) {
+	        while (rs.next()) {
+	            int id          = rs.getInt("id");
+	            String author   = rs.getString("author");
+	            String title    = rs.getString("title");
+	            String body     = rs.getString("body");
+	            String type     = rs.getString("post_type");
+	            String imgFile  = rs.getString("image_filename");
+	            Blob blob       = rs.getBlob("image_data");
+	            String created  = rs.getString("created_at");
+
+	            javafx.scene.image.Image img = null;
+	            if (blob != null) {
+	                img = new javafx.scene.image.Image(blob.getBinaryStream());
+	            }
+	            list.add(new entityClasses.DiscussionPost(id, author, title, body, type, imgFile, img, created));
+	        }
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    }
+	    return list;
+	}
+
+	/*******
+	 * <p> Method: getRepliesForPost </p>
+	 *
+	 * <p> Description: Loads all replies for a given post, ordered oldest-first so the
+	 * conversation reads top-to-bottom. </p>
+	 *
+	 * @param postId  the id of the parent post
+	 * @return a List of DiscussionReply objects
+	 */
+	public java.util.List<entityClasses.DiscussionReply> getRepliesForPost(int postId) {
+	    java.util.List<entityClasses.DiscussionReply> list = new java.util.ArrayList<>();
+	    String sql = "SELECT id, post_id, author, body, created_at FROM replies WHERE post_id = ? ORDER BY created_at ASC";
+	    try (PreparedStatement ps = connection.prepareStatement(sql)) {
+	        ps.setInt(1, postId);
+	        try (ResultSet rs = ps.executeQuery()) {
+	            while (rs.next()) {
+	                list.add(new entityClasses.DiscussionReply(
+	                        rs.getInt("id"),
+	                        rs.getInt("post_id"),
+	                        rs.getString("author"),
+	                        rs.getString("body"),
+	                        rs.getString("created_at")));
+	            }
+	        }
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    }
+	    return list;
+	}
+
+	/*******
+	 * <p> Method: addReply </p>
+	 *
+	 * <p> Description: Inserts a new reply for the given post. </p>
+	 *
+	 * @param postId  the parent post's id
+	 * @param author  the replying user's username
+	 * @param body    the reply text
+	 * @return the generated reply id, or -1 on failure
+	 */
+	public int addReply(int postId, String author, String body) {
+	    String sql = "INSERT INTO replies (post_id, author, body) VALUES (?, ?, ?)";
+	    try (PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+	        ps.setInt(1, postId);
+	        ps.setString(2, author);
+	        ps.setString(3, body);
+	        ps.executeUpdate();
+	        try (ResultSet keys = ps.getGeneratedKeys()) {
+	            if (keys.next()) return keys.getInt(1);
+	        }
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    }
+	    return -1;
+	}
+
+	/*******
+	 * <p> Method: deleteReply </p>
+	 *
+	 * <p> Description: Deletes a single reply by its id. </p>
+	 *
+	 * @param replyId  the id of the reply to delete
+	 */
+	public void deleteReply(int replyId) {
+	    String sql = "DELETE FROM replies WHERE id = ?";
+	    try (PreparedStatement ps = connection.prepareStatement(sql)) {
+	        ps.setInt(1, replyId);
+	        ps.executeUpdate();
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    }
+	}
+
+	/*******
+	 * <p> Method: deletePost </p>
+	 *
+	 * <p> Description: Deletes a post and all its replies (cascade). </p>
+	 *
+	 * @param postId  the id of the post to delete
+	 */
+	public void deletePost(int postId) {
+	    String sql = "DELETE FROM posts WHERE id = ?";
+	    try (PreparedStatement ps = connection.prepareStatement(sql)) {
+	        ps.setInt(1, postId);
+	        ps.executeUpdate();
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    }
+	}
+	
+	/*******
+	 * <p> Method: void createPost(Post post) </p>
+	 * 
+	 * <p> Description: Inserts a new post record into the postDB table using the provided Post
+	 * object. The postId is auto-generated by the database and does not need to be provided. </p>
+	 * 
+	 * @param post specifies the Post object to be added to the database.
+	 * 
+	 * @throws SQLException when there is an issue creating the SQL command or executing it.
+	 * 
+	 */
+	public void createPost(Post post) throws SQLException {
+		String query = "INSERT INTO postDB (authorUsername, title, body, timestamp, isPinned) "
+				+ "VALUES (?, ?, ?, ?, ?)";
+		try (PreparedStatement pstmt = connection.prepareStatement(query)){
+				
+			pstmt.setString(1,  post.getAuthorUsername());
+			
+			pstmt.setString(2, post.getTitle());
+			
+			pstmt.setString(3,  post.getBody());
+			
+			pstmt.setString(4,  post.getTimestamp());
+			
+			pstmt.setBoolean(5, post.getIsPinned());
+			
+			pstmt.executeUpdate();
+		}
+	}
+	
+	/*******
+	 * <p> Method: Post getPostById(int postId) </p>
+	 * 
+	 * <p> Description: Retrieves a single Post record from the postDB table whose postId matches
+	 * the specified value. Returns null if no matching post is found. </p>
+	 * 
+	 * @param postId is an int that specifies the unique identifier of the post to retrieve.
+	 * 
+	 * @return the Post object with the matching postId, or null if not found.
+	 * 
+	 * @throws SQLException when there is an issue creating the SQL command or executing it.
+	 * 
+	 */
+
+	public Post getPostById (int postId) throws SQLException {
+		String query = "SELECT * FROM postDB where postId = ?";
+		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+			
+			pstmt.setInt(1, postId); 
+			
+			ResultSet res = pstmt.executeQuery();
+			
+			if (res.next()) {
+				return new Post(
+						res.getInt("postId"), 
+						res.getString("authorUsername"), 
+						res.getString("title"), 
+						res.getString("body"), 
+						res.getString("timestamp"), 
+						res.getBoolean("isPinned")
+				
+				);
+					
+			}
+			
+			return null;
+			
+		}
+	}
+	
+	/*******
+	 * <p> Method: List&lt;Post&gt; getAllPosts() </p>
+	 * 
+	 * <p> Description: Retrieves all Post records from the postDB table and returns them as a
+	 * List of Post objects. Returns an empty list if no posts exist. This supports the
+	 * requirement to store and retrieve all current posts. </p>
+	 * 
+	 * @return a List of all Post objects currently stored in the database.
+	 * 
+	 * @throws SQLException when there is an issue creating the SQL command or executing it.
+	 * 
+	 */
+	public List<Post> getAllPosts() throws SQLException {
+		String query = "SELECT * FROM postDB";
+		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+			
+			ResultSet res = pstmt.executeQuery();  
+			
+			List<Post> posts = new ArrayList<>();
+			
+			while (res.next()) {
+				posts.add(new Post(
+						res.getInt("postId"), 
+						res.getString("authorUsername"), 
+						res.getString("title"), 
+						res.getString("body"), 
+						res.getString("timestamp"), 
+						res.getBoolean("isPinned")
+				));
+			}
+			
+			return posts; 
+		}
+	}
+	
+	/*******
+	 * <p> Method: void updatePost(Post post) </p>
+	 * 
+	 * <p> Description: Updates an existing post record in the postDB table using the provided
+	 * Post object. The postId field is used to identify which record to update. All other
+	 * fields are overwritten with the values from the provided Post object. </p>
+	 * 
+	 * @param post specifies the Post object containing the updated values to write to the database.
+	 * 
+	 * @throws SQLException when there is an issue creating the SQL command or executing it.
+	 * 
+	 */
+	public void updatePost(Post post) throws SQLException {
+		String query = "UPDATE postDB SET authorUsername = ?, "
+				+ "title = ?, "
+				+ "body = ?, "
+				+ "timestamp = ?, "
+				+ "isPinned = ? "
+				+ "WHERE postId = ?";
+		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+			pstmt.setString(1, post.getAuthorUsername());
+			pstmt.setString(2, post.getTitle());
+			pstmt.setString(3,  post.getBody());
+			pstmt.setString(4, post.getTimestamp());
+			pstmt.setBoolean(5, post.getIsPinned());
+			pstmt.setInt(6, post.getPostId());
+			
+			pstmt.execute();
+		}
+	}
+	
+	/*******
+	 * <p> Method: void deletePost(int postId) </p>
+	 * 
+	 * <p> Description: Deletes the post record from the postDB table whose postId matches the
+	 * specified value. If no matching record exists, the operation completes silently with no
+	 * effect. </p>
+	 * 
+	 * @param postId is an int that specifies the unique identifier of the post to delete.
+	 * 
+	 * @throws SQLException when there is an issue creating the SQL command or executing it.
+	 * 
+	 */
+
+	public void deletePost(int postId) throws SQLException {
+		String query = "DELETE FROM postDB WHERE postId = ?";
+		
+		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+			pstmt.setInt(1, postId);
+			
+			pstmt.execute(); 
+		}
+	}
+	
+	/*******
+	 * <p> Method: void createReply(Reply reply) </p>
+	 * 
+	 * <p> Description: Inserts a new reply record into the replyDB table using the provided Reply
+	 * object. The replyId is auto-generated by the database and does not need to be provided.
+	 * The parentPostId field links this reply to its associated post. </p>
+	 * 
+	 * @param reply specifies the Reply object to be added to the database.
+	 * 
+	 * @throws SQLException when there is an issue creating the SQL command or executing it.
+	 * 
+	 */
+	public void createReply(Reply reply) throws SQLException {
+		String query = "INSERT INTO replyDB (parentPostId, authorUsername, body, timestamp, isAccepted) "
+				+ "VALUES (?, ?, ?, ?, ?)";
+		try (PreparedStatement pstmt = connection.prepareStatement(query)){
+				
+			pstmt.setInt(1,  reply.getParentPostId());
+			
+			pstmt.setString(2, reply.getAuthorUsername());
+			
+			pstmt.setString(3,  reply.getBody());
+			
+			pstmt.setString(4,  reply.getTimestamp());
+			
+			pstmt.setBoolean(5, reply.getIsAccepted());
+			
+			pstmt.executeUpdate();
+		}
+	}
+	
+	/*******
+	 * <p> Method: Reply getReplyById(int replyId) </p>
+	 * 
+	 * <p> Description: Retrieves a single Reply record from the replyDB table whose replyId
+	 * matches the specified value. Returns null if no matching reply is found. </p>
+	 * 
+	 * @param replyId is an int that specifies the unique identifier of the reply to retrieve.
+	 * 
+	 * @return the Reply object with the matching replyId, or null if not found.
+	 * 
+	 * @throws SQLException when there is an issue creating the SQL command or executing it.
+	 * 
+	 */
+	public Reply getReplyById (int replyId) throws SQLException {
+		String query = "SELECT * FROM replyDB where replyId = ?";
+		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+			
+			pstmt.setInt(1, replyId); 
+			
+			ResultSet res = pstmt.executeQuery();
+			
+			if (res.next()) {
+				return new Reply(
+						res.getInt("replyId"),
+						res.getInt("parentPostId"),
+						res.getString("authorUsername"),
+						res.getString("body"),
+						res.getString("timestamp"),
+						res.getBoolean("isAccepted")
+				);
+					
+			}
+			
+			return null;
+			
+		}
+	}
+	
+	/*******
+	 * <p> Method: List&lt;Reply&gt; getReplyByPostId (int postId) </p>
+	 * 
+	 * <p> Description: Retrieves a list of Reply records from the replyDB table whose parentPostId
+	 * matches the specified value. Returns an empty list is no matching replies are found. </p>
+	 * 
+	 * @param postId is an int that specifies the unique identifier of the parentPostId.
+	 * 
+	 * @return A list consisting of Reply object with matching parentPostId, or an empty list if no answer found.
+	 * 
+	 * @throws SQLException when there is an issue creating the SQL command or executing it.
+	 * 
+	 */
+	public List<Reply> getReplyByPostId (int postId) throws SQLException {
+		String query = "SELECT * FROM replyDB where parentPostId = ?";
+		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+			
+			pstmt.setInt(1, postId);
+			
+			ResultSet res = pstmt.executeQuery();
+			
+			List<Reply> replies = new ArrayList<>(); 
+			
+			while (res.next()) {
+				replies.add(new Reply(
+						res.getInt("replyId"),
+						res.getInt("parentPostId"),
+						res.getString("authorUsername"),
+						res.getString("body"),
+						res.getString("timestamp"),
+						res.getBoolean("isAccepted")
+				));
+			}
+			
+			return replies; 
+		}
+	}
+	
+	/*******
+	 * <p> Method: List&lt;Reply&gt; getAllReplies() </p>
+	 * 
+	 * <p> Description: Retrieves all Reply records from the replyDB table and returns them as a
+	 * List of Reply objects. Returns an empty list if no replies exist. This supports the
+	 * requirement to store and retrieve all replies to all stored posts. </p>
+	 * 
+	 * @return a List of all Reply objects currently stored in the database.
+	 * 
+	 * @throws SQLException when there is an issue creating the SQL command or executing it.
+	 * 
+	 */
+	public List<Reply> getAllReplies() throws SQLException {
+		String query = "SELECT * FROM replyDB";
+		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+			
+			ResultSet res = pstmt.executeQuery();  
+			
+			List<Reply> replies = new ArrayList<>();
+			
+			while (res.next()) {
+				replies.add(new Reply(
+						res.getInt("replyId"),
+						res.getInt("parentPostId"),
+						res.getString("authorUsername"),
+						res.getString("body"),
+						res.getString("timestamp"),
+						res.getBoolean("isAccepted")
+				));
+										
+			}
+			
+			return replies; 
+		}
+	}
+	
+	/*******
+	 * <p> Method: void updateReply(Reply reply) </p>
+	 * 
+	 * <p> Description: Updates an existing reply record in the replyDB table using the provided
+	 * Reply object. The replyId field is used to identify which record to update. All other
+	 * fields are overwritten with the values from the provided Reply object. </p>
+	 * 
+	 * @param reply specifies the Reply object containing the updated values to write to the database.
+	 * 
+	 * @throws SQLException when there is an issue creating the SQL command or executing it.
+	 * 
+	 */
+	public void updateReply(Reply reply) throws SQLException {
+		String query = "UPDATE replyDB SET parentPostId = ?, "
+				+ "authorUsername = ?, "
+				+ "body = ?, "
+				+ "timestamp = ?, "
+				+ "isAccepted = ? "
+				+ "WHERE replyId = ?";
+		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+			pstmt.setInt(1, reply.getParentPostId());
+			pstmt.setString(2, reply.getAuthorUsername());
+			pstmt.setString(3,  reply.getBody());
+			pstmt.setString(4, reply.getTimestamp());
+			pstmt.setBoolean(5, reply.getIsAccepted());
+			pstmt.setInt(6, reply.getReplyId());
+			
+			pstmt.execute();
+		}
+	}
+	
+	/*******
+	 * <p> Method: void deleteReply(int replyId) </p>
+	 * 
+	 * <p> Description: Deletes the reply record from the replyDB table whose replyId matches the
+	 * specified value. If no matching record exists, the operation completes silently with no
+	 * effect. </p>
+	 * 
+	 * @param replyId is an int that specifies the unique identifier of the reply to delete.
+	 * 
+	 * @throws SQLException when there is an issue creating the SQL command or executing it.
+	 * 
+	 */
+	public void deleteReply(int replyId) throws SQLException {
+		String query = "DELETE FROM replyDB WHERE replyId = ?";
+		
+		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+			pstmt.setInt(1, replyId);
+			
+			pstmt.execute(); 
+		}
+	}
+
 }

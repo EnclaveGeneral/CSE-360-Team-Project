@@ -76,6 +76,6 @@ public class ControllerRole1Home {
 	}
 	
 	protected static void forum() {
-		guiForum.ViewForum.displayForum(ViewRole1Home.theStage, ViewRole1Home.theUser);
+		guiDiscussion.ViewDiscussion.displayDiscussion(ViewRole1Home.theStage, ViewRole1Home.theUser);
 	}
 }

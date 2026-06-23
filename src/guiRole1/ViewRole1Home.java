@@ -78,7 +78,7 @@ public class ViewRole1Home {
 	protected static Pane theRootPane;			// The Pane that holds all the GUI widgets
 	protected static User theUser;				// The current logged in User
 	
-	protected static Button button_forum = new Button("forum");
+	protected static Button button_forum = new Button("Discussion Board");
 	private static Scene theViewRole1HomeScene;	// The shared Scene each invocation populates
 	protected static final int theRole = 2;		// Admin: 1; Role1: 2; Role2: 3
 
@@ -168,8 +168,8 @@ public class ViewRole1Home {
 		
 		// GUI Area 2
 		
-			// This is a stub, so this area is empty
-		setupButtonUI(button_forum, "Dialog", 16, 250, Pos.CENTER, 400, 270);
+		// This is a stub, so this area is empty
+		setupButtonUI(button_forum, "Dialog", 16, 250, Pos.CENTER, centerX(250), 270);
 		button_forum.setOnAction((_) -> {ControllerRole1Home.forum(); });
 		
 		// GUI Area 3
@@ -215,6 +215,10 @@ public class ViewRole1Home {
 	}
 	
 	
+	private static double centerX(double controlWidth) {
+		return (width - controlWidth ) / 2;
+	}
+	
 	/**********
 	 * Private local method to initialize the standard fields for a button
 	 * 
@@ -229,7 +233,7 @@ public class ViewRole1Home {
 	private static void setupButtonUI(Button b, String ff, double f, double w, Pos p, double x, 
 			double y){
 		b.setFont(Font.font(ff, f));
-		b.setMinWidth(w);
+		b.setPrefWidth(w);
 		b.setAlignment(p);
 		b.setLayoutX(x);
 		b.setLayoutY(y);		

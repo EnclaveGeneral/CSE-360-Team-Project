@@ -139,7 +139,7 @@ public class ControllerAdminHome {
 	 * launches the forum
 	 */
 	protected static void forum() {
-		guiForum.ViewForum.displayForum(ViewAdminHome.theStage, ViewAdminHome.theUser);
+		guiDiscussion.ViewDiscussion.displayDiscussion(ViewAdminHome.theStage, ViewAdminHome.theUser);
 	}
 	
 	/**********
