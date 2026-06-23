@@ -240,6 +240,7 @@ public class ViewAdminHome {
 		for (int i = 0; i < roles.length; i++) {		// roles this code currently supports
 			list.add(roles[i]);
 		}
+		combobox_SelectRole.getStyleClass().add("normal-combobox");
 		combobox_SelectRole.setItems(FXCollections.observableArrayList(list));
 		combobox_SelectRole.getSelectionModel().select(0);
 		alertEmailSent.setTitle("Invitation");
