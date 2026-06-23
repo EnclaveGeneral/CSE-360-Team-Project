@@ -1,28 +1,30 @@
 package guiDiscussion;
 
-import java.sql.SQLException;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.List;
 import database.Database;
-import entityClasses.Post;
-import entityClasses.Reply;
+import entityClasses.DiscussionPost;
+import entityClasses.DiscussionReply;
 import applicationMain.FoundationsMain;
+import javafx.stage.Stage;
 
 /*******
  * <p> Title: ControllerDiscussion Class </p>
  *
  * <p> Description: This class implements the Controller component of the MVC design pattern for
- * the Discussion Board page. It handles all user interactions from ViewDiscussion, performs
- * input validation, delegates database operations to the Database class, and refreshes the
- * View after each operation. It manages CRUD operations for both posts and replies, and
- * tracks which post and reply are currently selected in the ListViews. </p>
+ * the unified Discussion Board page. It handles all user interactions from ViewDiscussion,
+ * validates input via ModelDiscussion, and delegates all database operations to Database.
+ * Text posts support full CRUD. Image posts support create and delete only — update is not
+ * meaningful for a BLOB image. Replies are always text and support full CRUD. </p>
  *
  * <p> Copyright: Lynn Robert Carter © 2025 </p>
  *
- * @author Weiye (Richard) Zhang
+ * @author Weiye (Richard) Zhang, Joshua Sprague
  *
- * @version 2.00	2026-06-23
+ * @version 1.00	2026-06-15	Initial HW2 text-only discussion board
+ * @version 2.00	2026-06-22	Added image post support
+ * @version 3.00	2026-06-23	Unified board; text CRUD + image create/delete; reply CRUD
  */
 public class ControllerDiscussion {
 
@@ -32,13 +34,13 @@ public class ControllerDiscussion {
 
 	**********************************************************************************************/
 
-	// Tracks which post is currently selected in listView_Posts (-1 means nothing selected)
-	private static int selectedPostId = -1;
-
-	// Tracks which reply is currently selected in listView_Replies (-1 means nothing selected)
+	// -1 means nothing selected
+	private static int selectedPostId  = -1;
 	private static int selectedReplyId = -1;
 
-	// Reference to the shared database singleton established in FoundationsMain
+	// Holds the image file chosen via FileChooser until Create Post is pressed
+	private static java.io.File pendingImageFile = null;
+
 	private static Database theDatabase = FoundationsMain.database;
 
 
@@ -56,7 +58,6 @@ public class ControllerDiscussion {
 	 *
 	 */
 	public ControllerDiscussion() {
-
 	}
 
 
@@ -69,25 +70,18 @@ public class ControllerDiscussion {
 	/*******
 	 * <p> Method: refreshPostList() </p>
 	 *
-	 * <p> Description: Retrieves all posts from the database and repopulates the listView_Posts
-	 * widget in ViewDiscussion. Each post is displayed as "[postId] title - authorUsername".
-	 * Called after any CRUD operation on posts to keep the list current. </p>
+	 * <p> Description: Retrieves all posts from the database and repopulates listView_Posts.
+	 * Text posts are prefixed with a document icon; image posts with an image icon so the
+	 * user can distinguish post types at a glance. Called after any post CRUD operation. </p>
 	 *
 	 */
 	protected static void refreshPostList() {
-		try {
-			List<Post> posts = theDatabase.getAllPosts();
-
-			// Clear the existing list before repopulating to avoid duplicate entries
-			ViewDiscussion.listView_Posts.getItems().clear();
-
-			for (Post p : posts) {
-				ViewDiscussion.listView_Posts.getItems().add(
-					"[" + p.getPostId() + "] " + p.getTitle() + " - " + p.getAuthorUsername()
-				);
-			}
-		} catch (SQLException e) {
-			ViewDiscussion.label_ErrorMessage.setText("Error loading posts: " + e.getMessage());
+		ViewDiscussion.listView_Posts.getItems().clear();
+		List<DiscussionPost> posts = theDatabase.getAllPosts();
+		for (DiscussionPost p : posts) {
+			String icon = p.isImagePost() ? "\uD83D\uDDBC" : "\uD83D\uDCC4";
+			ViewDiscussion.listView_Posts.getItems().add(
+				icon + " [" + p.getId() + "] " + p.getTitle() + " — " + p.getAuthor());
 		}
 	}
 
@@ -95,29 +89,20 @@ public class ControllerDiscussion {
 	/*******
 	 * <p> Method: refreshReplyList(int postId) </p>
 	 *
-	 * <p> Description: Retrieves all replies belonging to the specified post from the database
-	 * and repopulates the listView_Replies widget in ViewDiscussion. Each reply is displayed
-	 * as "[replyId] body - authorUsername". Called after any CRUD operation on replies, and
-	 * when a new post is selected. </p>
+	 * <p> Description: Retrieves all replies for the given post and repopulates
+	 * listView_Replies. Each reply displays as "[id] body — author". Called after any reply
+	 * CRUD operation and when a new post is selected. </p>
 	 *
 	 * @param postId is an int that specifies the unique identifier of the parent post whose
-	 * 		replies should be loaded.
+	 *               replies should be loaded.
 	 *
 	 */
 	protected static void refreshReplyList(int postId) {
-		try {
-			List<Reply> replies = theDatabase.getReplyByPostId(postId);
-
-			// Clear the existing list before repopulating to avoid duplicate entries
-			ViewDiscussion.listView_Replies.getItems().clear();
-
-			for (Reply reply : replies) {
-				ViewDiscussion.listView_Replies.getItems().add(
-					"[" + reply.getReplyId() + "] " + reply.getBody() + " - " + reply.getAuthorUsername()
-				);
-			}
-		} catch (SQLException e) {
-			ViewDiscussion.label_ErrorMessage.setText("Error loading replies: " + e.getMessage());
+		ViewDiscussion.listView_Replies.getItems().clear();
+		List<DiscussionReply> replies = theDatabase.getRepliesForPost(postId);
+		for (DiscussionReply r : replies) {
+			ViewDiscussion.listView_Replies.getItems().add(
+				"[" + r.getId() + "] " + r.getBody() + " \u2014 " + r.getAuthor());
 		}
 	}
 
@@ -131,506 +116,358 @@ public class ControllerDiscussion {
 	/*******
 	 * <p> Method: selectPost() </p>
 	 *
-	 * <p> Description: Handles the user clicking a post in listView_Posts. Retrieves the
-	 * selected post from the database using the list index, stores its postId in selectedPostId,
-	 * populates the post input fields with the post's data, and calls refreshReplyList() to
-	 * load the replies for the selected post. </p>
+	 * <p> Description: Handles the user clicking a post in listView_Posts. Stores its id in
+	 * selectedPostId, populates the input fields with the post's data, and loads its replies.
+	 * For image posts, the body field is left blank since there is no editable text body. </p>
 	 *
 	 */
 	protected static void selectPost() {
-
-		// Get the index of the selected item — returns -1 if nothing is selected
 		int index = ViewDiscussion.listView_Posts.getSelectionModel().getSelectedIndex();
 		if (index == -1) return;
 
-		try {
-			List<Post> posts = theDatabase.getAllPosts();
+		List<DiscussionPost> posts = theDatabase.getAllPosts();
+		if (index >= posts.size()) return;
 
-			Post selectedPost = posts.get(index);
+		DiscussionPost p = posts.get(index);
+		selectedPostId  = p.getId();
+		selectedReplyId = -1;
 
-			// Store the postId so subsequent CRUD operations know which post to act on
-			selectedPostId = selectedPost.getPostId();
+		// Populate shared fields
+		ViewDiscussion.text_Author.setText(p.getAuthor());
+		ViewDiscussion.text_Title.setText(p.getTitle());
 
-			// Populate the input fields with the selected post's current data
-			ViewDiscussion.text_Title.setText(selectedPost.getTitle());
-			ViewDiscussion.text_Author.setText(selectedPost.getAuthorUsername());
-			ViewDiscussion.text_Body.setText(selectedPost.getBody());
-			ViewDiscussion.check_IsPinned.setSelected(selectedPost.getIsPinned());
-
-			// Load the replies for this post into the reply ListView
-			refreshReplyList(selectedPostId);
-
-		} catch (SQLException e) {
-			ViewDiscussion.label_ErrorMessage.setText("Error selecting post: " + e.getMessage());
+		if (p.isImagePost()) {
+			// Switch toggle to IMAGE and show filename — body is not editable for image posts
+			ViewDiscussion.radio_Image.setSelected(true);
+			ViewDiscussion.label_ImageFile.setText(p.getImageFilename() != null
+				? p.getImageFilename() : "image post");
+			ViewDiscussion.text_Body.setText("");
+		} else {
+			// Switch toggle to TEXT and populate the body field
+			ViewDiscussion.radio_Text.setSelected(true);
+			ViewDiscussion.text_Body.setText(p.getBody() != null ? p.getBody() : "");
 		}
+
+		ViewDiscussion.label_ErrorMessage.setText(
+			"Selected: \"" + p.getTitle() + "\" (" + p.getPostType() + " post)");
+
+		refreshReplyList(selectedPostId);
 	}
 
 
 	/*******
 	 * <p> Method: selectReply() </p>
 	 *
-	 * <p> Description: Handles the user clicking a reply in listView_Replies. Retrieves the
-	 * selected reply from the database using the list index, stores its replyId in
-	 * selectedReplyId, and populates the reply input fields with the reply's data. </p>
+	 * <p> Description: Handles the user clicking a reply in listView_Replies. Stores its id
+	 * in selectedReplyId and populates the reply body field with its current text. </p>
 	 *
 	 */
 	protected static void selectReply() {
-
-		// Get the index of the selected item — returns -1 if nothing is selected
 		int index = ViewDiscussion.listView_Replies.getSelectionModel().getSelectedIndex();
 		if (index == -1) return;
 
-		try {
-			// Use getReplyByPostId to ensure the index matches what is shown in the ListView
-			List<Reply> replies = theDatabase.getReplyByPostId(selectedPostId);
+		List<DiscussionReply> replies = theDatabase.getRepliesForPost(selectedPostId);
+		if (index >= replies.size()) return;
 
-			Reply selectedReply = replies.get(index);
+		DiscussionReply r = replies.get(index);
+		selectedReplyId = r.getId();
 
-			// Store the replyId so subsequent CRUD operations know which reply to act on
-			selectedReplyId = selectedReply.getReplyId();
-
-			// Populate the reply input fields with the selected reply's current data
-			ViewDiscussion.text_ReplyBody.setText(selectedReply.getBody());
-			ViewDiscussion.check_IsAccepted.setSelected(selectedReply.getIsAccepted());
-
-		} catch (SQLException e) {
-			ViewDiscussion.label_ErrorMessage.setText("Error selecting reply: " + e.getMessage());
-		}
+		// Populate the reply body field so the user can edit it
+		ViewDiscussion.text_ReplyBody.setText(r.getBody());
 	}
 
 
 	/*-*******************************************************************************************
 
-	Post CRUD action methods
+	Post action methods
 
 	**********************************************************************************************/
 
 	/*******
+	 * <p> Method: performPickImage(Stage stage) </p>
+	 *
+	 * <p> Description: Opens a FileChooser dialog so the user can select a PNG, JPG, or JPEG
+	 * file. Stores the chosen file in pendingImageFile and updates the filename label. The
+	 * file is not saved to the database until Create Post is pressed. </p>
+	 *
+	 * @param stage is the current JavaFX Stage required to open the FileChooser dialog.
+	 *
+	 */
+	protected static void performPickImage(Stage stage) {
+		javafx.stage.FileChooser fc = new javafx.stage.FileChooser();
+		fc.setTitle("Select Image");
+		fc.getExtensionFilters().add(
+			new javafx.stage.FileChooser.ExtensionFilter(
+				"Image Files", "*.png", "*.jpg", "*.jpeg"));
+
+		java.io.File home = new java.io.File(System.getProperty("user.home"), "Downloads");
+		if (home.exists()) fc.setInitialDirectory(home);
+
+		java.io.File chosen = fc.showOpenDialog(stage);
+		if (chosen != null) {
+			pendingImageFile = chosen;
+			ViewDiscussion.label_ImageFile.setText(chosen.getName());
+		}
+	}
+
+
+	/*******
 	 * <p> Method: performCreatePost() </p>
 	 *
-	 * <p> Description: Handles the Create Post button action. Validates that the title and body
-	 * fields are not empty, creates a new Post object with a generated timestamp, inserts it
-	 * into the database, refreshes the post list, and clears the input fields. The postId is
-	 * set to 0 since the database auto-generates it via AUTO_INCREMENT. </p>
+	 * <p> Description: Handles the Create Post button. For text posts, validates author, title,
+	 * and body then calls saveTextPost(). For image posts, validates author, title, and file
+	 * selection then calls saveImagePost(). Refreshes the post list on success. </p>
 	 *
 	 */
 	protected static void performCreatePost() {
+		String author = ViewDiscussion.text_Author.getText().trim();
+		String title  = ViewDiscussion.text_Title.getText().trim();
 
-		// Validate that the title field is not empty before attempting to create a new Post 
-		String titleError = ModelDiscussion.validatePostTitle(ViewDiscussion.text_Title.getText().trim());
-		if (!titleError.isEmpty()) {
-			ViewDiscussion.label_ErrorMessage.setText(titleError);
-			return; 
+		String authorErr = ModelDiscussion.validateAuthor(author);
+		if (!authorErr.isEmpty()) { setError(authorErr); return; }
+
+		String titleErr = ModelDiscussion.validateTitle(title);
+		if (!titleErr.isEmpty()) { setError(titleErr); return; }
+
+		if (ViewDiscussion.radio_Image.isSelected()) {
+			// Image post — validate file and write bytes to the database
+			String fileErr = ModelDiscussion.validateImageFile(pendingImageFile);
+			if (!fileErr.isEmpty()) { setError(fileErr); return; }
+
+			try (FileInputStream fis = new FileInputStream(pendingImageFile)) {
+				javafx.scene.image.Image img = new javafx.scene.image.Image(fis);
+				int id = theDatabase.saveImagePost(
+					author, title, pendingImageFile.getName(), img, false);
+				if (id == -1) { setError("Error: Failed to save image post."); return; }
+			} catch (IOException e) {
+				setError("Error loading image: " + e.getMessage()); return;
+			}
+			pendingImageFile = null;
+			ViewDiscussion.label_ImageFile.setText("No file selected.");
+
+		} else {
+			// Text post — validate body and insert into the posts table
+			String body    = ViewDiscussion.text_Body.getText().trim();
+			String bodyErr = ModelDiscussion.validateBody(body);
+			if (!bodyErr.isEmpty()) { setError(bodyErr); return; }
+
+			int id = theDatabase.saveTextPost(author, title, body, false);
+			if (id == -1) { setError("Error: Failed to save post."); return; }
 		}
 
-		// Validate that the body field is not empty before attempting to create a new Post 
-		String bodyError = ModelDiscussion.validateBody(ViewDiscussion.text_Body.getText().trim());
-		if (!bodyError.isEmpty()) {
-			ViewDiscussion.label_ErrorMessage.setText(bodyError);
-			return;
-		}
-		
-		// Validate that the author field is not empty before attempting to create a new Post 
-		String authorError = ModelDiscussion.validateAuthor(ViewDiscussion.text_Author.getText().trim());
-		if (!authorError.isEmpty()) {
-		    ViewDiscussion.label_ErrorMessage.setText(authorError);
-		    return;
-		}
-
-		// postId is 0 because the database auto-generates the actual ID via AUTO_INCREMENT
-		Post newPost = new Post(0,
-				ViewDiscussion.text_Author.getText().trim(),
-				ViewDiscussion.text_Title.getText().trim(),
-				ViewDiscussion.text_Body.getText().trim(),
-				LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
-				ViewDiscussion.check_IsPinned.isSelected());
-
-		try {
-			theDatabase.createPost(newPost);
-			refreshPostList();
-
-			ViewDiscussion.label_ErrorMessage.setText("Post created successfully!");
-
-			// Clear the input fields after a successful create operation
-			ViewDiscussion.text_Title.setText("");
-			ViewDiscussion.text_Body.setText("");
-			ViewDiscussion.text_Author.setText("");
-			ViewDiscussion.check_IsPinned.setSelected(false);
-
-		} catch (SQLException e) {
-			ViewDiscussion.label_ErrorMessage.setText("Error creating post: " + e.getMessage());
-		}
+		clearPostFields();
+		setSuccess("Post created successfully!");
+		refreshPostList();
 	}
 
 
 	/*******
 	 * <p> Method: performUpdatePost() </p>
 	 *
-	 * <p> Description: Handles the Update Post button action. Validates that a post is selected
-	 * and that the title and body fields are not empty, creates an updated Post object using
-	 * the selectedPostId, updates the database record, and refreshes the post list. </p>
+	 * <p> Description: Handles the Update Post button. Only valid for text posts — image posts
+	 * cannot be updated through this UI. Validates that a text post is selected and that the
+	 * title and body fields are not empty, then updates the database record. </p>
 	 *
 	 */
 	protected static void performUpdatePost() {
+		if (selectedPostId == -1) { setError("Please select a post to update."); return; }
 
-		// A post must be selected before an update can be performed
-		if (selectedPostId == -1) {
-			ViewDiscussion.label_ErrorMessage.setText("Error: Please select a post to update.");
+		// Guard: do not allow updating image posts
+		if (ViewDiscussion.radio_Image.isSelected()) {
+			setError("Image posts cannot be updated. Delete and re-upload instead.");
 			return;
 		}
 
-		// Validate that the title field is not empty before attempting to update a Post
-		String titleError = ModelDiscussion.validatePostTitle(ViewDiscussion.text_Title.getText().trim());
-		if (!titleError.isEmpty()) {
-			ViewDiscussion.label_ErrorMessage.setText(titleError);
-			return; 
-		}
+		String author = ViewDiscussion.text_Author.getText().trim();
+		String title  = ViewDiscussion.text_Title.getText().trim();
+		String body   = ViewDiscussion.text_Body.getText().trim();
 
-		// Validate that the body field is not empty before attempting to update a Post
-		String bodyError = ModelDiscussion.validateBody(ViewDiscussion.text_Body.getText().trim());
-		if (!bodyError.isEmpty()) {
-			ViewDiscussion.label_ErrorMessage.setText(bodyError);
-			return;
-		}
-		
-		// Validate that the author field is not empty before attempting to update a Post
-		String authorError = ModelDiscussion.validateAuthor(ViewDiscussion.text_Author.getText().trim());
-		if (!authorError.isEmpty()) {
-			ViewDiscussion.label_ErrorMessage.setText(authorError);
-			return; 
-		}
+		String authorErr = ModelDiscussion.validateAuthor(author);
+		if (!authorErr.isEmpty()) { setError(authorErr); return; }
 
-		// Use selectedPostId to ensure the correct database record is updated
-		Post updatedPost = new Post(selectedPostId,
-				ViewDiscussion.text_Author.getText().trim(),
-				ViewDiscussion.text_Title.getText().trim(),
-				ViewDiscussion.text_Body.getText().trim(),
-				LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
-				ViewDiscussion.check_IsPinned.isSelected());
+		String titleErr = ModelDiscussion.validateTitle(title);
+		if (!titleErr.isEmpty()) { setError(titleErr); return; }
 
-		try {
-			theDatabase.updatePost(updatedPost);
-			refreshPostList();
+		String bodyErr = ModelDiscussion.validateBody(body);
+		if (!bodyErr.isEmpty()) { setError(bodyErr); return; }
 
-			ViewDiscussion.label_ErrorMessage.setText("Post updated successfully!");
-
-			// Clear the input fields after a successful update operation
-			ViewDiscussion.text_Title.setText("");
-			ViewDiscussion.text_Body.setText("");
-			ViewDiscussion.text_Author.setText("");
-			ViewDiscussion.check_IsPinned.setSelected(false);
-
-		} catch (SQLException e) {
-			ViewDiscussion.label_ErrorMessage.setText("Error updating post: " + e.getMessage());
-		}
+		theDatabase.updatePost(selectedPostId, title, body, false);
+		clearPostFields();
+		setSuccess("Post updated successfully!");
+		refreshPostList();
 	}
 
 
 	/*******
 	 * <p> Method: performDeletePost() </p>
 	 *
-	 * <p> Description: Handles the Delete Post button action. Validates that a post is selected,
-	 * deletes the post from the database, resets selectedPostId to -1, clears the reply list
-	 * since the parent post no longer exists, and refreshes the post list. </p>
+	 * <p> Description: Handles the Delete Post button. Validates that a post is selected,
+	 * deletes it from the database (cascade removes its replies), resets both selection
+	 * sentinels, clears the reply list, and refreshes the post list. </p>
 	 *
 	 */
 	protected static void performDeletePost() {
+		if (selectedPostId == -1) { setError("Please select a post to delete."); return; }
 
-		// A post must be selected before a delete can be performed
-		if (selectedPostId == -1) {
-			ViewDiscussion.label_ErrorMessage.setText("Error: Please select a post to delete.");
-			return;
-		}
-
-		try {
-			theDatabase.deletePost(selectedPostId);
-
-			// Reset the selection state since the selected post no longer exists
-			selectedPostId = -1;
-
-			// Clear the reply list since replies belonged to the now-deleted post
-			ViewDiscussion.listView_Replies.getItems().clear();
-
-			refreshPostList();
-
-			ViewDiscussion.label_ErrorMessage.setText("Post deleted successfully!");
-
-			// Clear the input fields after a successful delete operation
-			ViewDiscussion.text_Title.setText("");
-			ViewDiscussion.text_Body.setText("");
-			ViewDiscussion.text_Author.setText("");
-			ViewDiscussion.check_IsPinned.setSelected(false);
-
-		} catch (SQLException e) {
-			ViewDiscussion.label_ErrorMessage.setText("Error deleting post: " + e.getMessage());
-		}
+		theDatabase.deletePost(selectedPostId);
+		selectedPostId  = -1;
+		selectedReplyId = -1;
+		ViewDiscussion.listView_Replies.getItems().clear();
+		clearPostFields();
+		setSuccess("Post deleted.");
+		refreshPostList();
 	}
 
 
 	/*-*******************************************************************************************
 
-	Reply CRUD action methods
+	Reply action methods
 
 	**********************************************************************************************/
 
 	/*******
 	 * <p> Method: performCreateReply() </p>
 	 *
-	 * <p> Description: Handles the Create Reply button action. Validates that a post is selected
-	 * and that the reply body field is not empty, creates a new Reply object linked to the
-	 * selected post via selectedPostId, inserts it into the database, and refreshes the reply
-	 * list. The replyId is set to 0 since the database auto-generates it via AUTO_INCREMENT. </p>
+	 * <p> Description: Handles the Create Reply button. Validates that a post is selected and
+	 * that the author and reply body fields are not empty, inserts the reply linked to
+	 * selectedPostId, and refreshes the reply list. </p>
 	 *
 	 */
 	protected static void performCreateReply() {
+		if (selectedPostId == -1) { setError("Please select a post to reply to."); return; }
 
-		// A post must be selected before a reply can be created
-		if (selectedPostId == -1) {
-			ViewDiscussion.label_ErrorMessage.setText("Error: Please select a post to reply to.");
-			return;
-		}
+		String author  = ViewDiscussion.text_Author.getText().trim();
+		String body    = ViewDiscussion.text_ReplyBody.getText().trim();
 
-		// Validate that the reply body field is not empty before attempting to create
-		String bodyError = ModelDiscussion.validateBody(ViewDiscussion.text_ReplyBody.getText().trim());
-		if (!bodyError.isEmpty()) {
-			ViewDiscussion.label_ErrorMessage.setText(bodyError);
-			return; 
-		}
+		String authorErr = ModelDiscussion.validateAuthor(author);
+		if (!authorErr.isEmpty()) { setError(authorErr); return; }
 
-		// replyId is 0 because the database auto-generates the actual ID via AUTO_INCREMENT
-		Reply newReply = new Reply(0,
-				selectedPostId,
-				ViewDiscussion.text_Author.getText().trim(),
-				ViewDiscussion.text_ReplyBody.getText().trim(),
-				LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
-				ViewDiscussion.check_IsAccepted.isSelected());
+		String bodyErr = ModelDiscussion.validateBody(body);
+		if (!bodyErr.isEmpty()) { setError(bodyErr); return; }
 
-		try {
-			theDatabase.createReply(newReply);
-			refreshReplyList(selectedPostId);
+		int id = theDatabase.addReply(selectedPostId, author, body, false);
+		if (id == -1) { setError("Error: Failed to save reply."); return; }
 
-			ViewDiscussion.label_ErrorMessage.setText("Reply created successfully!");
-
-			// Clear the reply input fields after a successful create operation
-			ViewDiscussion.text_ReplyBody.setText("");
-			ViewDiscussion.check_IsAccepted.setSelected(false);
-
-		} catch (SQLException e) {
-			ViewDiscussion.label_ErrorMessage.setText("Error creating reply: " + e.getMessage());
-		}
+		ViewDiscussion.text_ReplyBody.setText("");
+		setSuccess("Reply created successfully!");
+		refreshReplyList(selectedPostId);
 	}
 
 
 	/*******
 	 * <p> Method: performUpdateReply() </p>
 	 *
-	 * <p> Description: Handles the Update Reply button action. Validates that both a post and
-	 * a reply are selected and that the reply body field is not empty, creates an updated Reply
-	 * object using the selectedReplyId and selectedPostId, updates the database record, and
-	 * refreshes the reply list. </p>
+	 * <p> Description: Handles the Update Reply button. Validates that both a post and a reply
+	 * are selected and that the reply body is not empty, then updates the reply record. </p>
 	 *
 	 */
 	protected static void performUpdateReply() {
+		if (selectedPostId  == -1) { setError("Please select a post first."); return; }
+		if (selectedReplyId == -1) { setError("Please select a reply to update."); return; }
 
-		// A post must be selected before a reply can be updated
-		if (selectedPostId == -1) {
-			ViewDiscussion.label_ErrorMessage.setText("Error: Please select a post first.");
-			return;
-		}
+		String body    = ViewDiscussion.text_ReplyBody.getText().trim();
+		String bodyErr = ModelDiscussion.validateBody(body);
+		if (!bodyErr.isEmpty()) { setError(bodyErr); return; }
 
-		// A reply must be selected before an update can be performed
-		if (selectedReplyId == -1) {
-			ViewDiscussion.label_ErrorMessage.setText("Error: Please select a reply to update.");
-			return;
-		}
-
-		// Validate that the reply body field is not empty before attempting to update
-		String bodyError = ModelDiscussion.validateBody(ViewDiscussion.text_ReplyBody.getText().trim());
-		if (!bodyError.isEmpty()) {
-			ViewDiscussion.label_ErrorMessage.setText(bodyError);
-			return; 
-		}
-
-		// Use selectedReplyId and selectedPostId to ensure the correct record is updated
-		Reply updatedReply = new Reply(selectedReplyId,
-				selectedPostId,
-				ViewDiscussion.text_Author.getText().trim(),
-				ViewDiscussion.text_ReplyBody.getText().trim(),
-				LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
-				ViewDiscussion.check_IsAccepted.isSelected());
-
-		try {
-			theDatabase.updateReply(updatedReply);
-			refreshReplyList(selectedPostId);
-
-			ViewDiscussion.label_ErrorMessage.setText("Reply updated successfully!");
-
-			// Clear the reply input fields after a successful update operation
-			ViewDiscussion.text_ReplyBody.setText("");
-			ViewDiscussion.check_IsAccepted.setSelected(false);
-
-		} catch (SQLException e) {
-			ViewDiscussion.label_ErrorMessage.setText("Error updating reply: " + e.getMessage());
-		}
+		theDatabase.updateReply(selectedReplyId, body, false);
+		ViewDiscussion.text_ReplyBody.setText("");
+		setSuccess("Reply updated successfully!");
+		refreshReplyList(selectedPostId);
 	}
 
 
 	/*******
 	 * <p> Method: performDeleteReply() </p>
 	 *
-	 * <p> Description: Handles the Delete Reply button action. Validates that both a post and
-	 * a reply are selected, deletes the reply from the database, resets selectedReplyId to -1,
-	 * and refreshes the reply list. </p>
+	 * <p> Description: Handles the Delete Reply button. Validates that both a post and a reply
+	 * are selected, deletes the reply, resets selectedReplyId, and refreshes the reply list. </p>
 	 *
 	 */
 	protected static void performDeleteReply() {
+		if (selectedPostId  == -1) { setError("Please select a post first."); return; }
+		if (selectedReplyId == -1) { setError("Please select a reply to delete."); return; }
 
-		// A post must be selected before a reply can be deleted
-		if (selectedPostId == -1) {
-			ViewDiscussion.label_ErrorMessage.setText("Error: Please select a post first.");
-			return;
-		}
-
-		// A reply must be selected before a delete can be performed
-		if (selectedReplyId == -1) {
-			ViewDiscussion.label_ErrorMessage.setText("Error: Please select a reply to delete.");
-			return;
-		}
-
-		try {
-			theDatabase.deleteReply(selectedReplyId);
-
-			// Reset the selection state since the selected reply no longer exists
-			selectedReplyId = -1;
-
-			refreshReplyList(selectedPostId);
-
-			ViewDiscussion.label_ErrorMessage.setText("Reply deleted successfully!");
-
-			// Clear the reply input fields after a successful delete operation
-			ViewDiscussion.text_ReplyBody.setText("");
-			ViewDiscussion.check_IsAccepted.setSelected(false);
-
-		} catch (SQLException e) {
-			ViewDiscussion.label_ErrorMessage.setText("Error deleting reply: " + e.getMessage());
-		}
+		theDatabase.deleteReply(selectedReplyId);
+		selectedReplyId = -1;
+		ViewDiscussion.text_ReplyBody.setText("");
+		setSuccess("Reply deleted.");
+		refreshReplyList(selectedPostId);
 	}
 
 
 	/*-*******************************************************************************************
 
-	Navigation methods
+	Navigation
 
 	**********************************************************************************************/
 
 	/*******
 	 * <p> Method: performBack() </p>
 	 *
-	 * <p> Description: Handles the Back button action. Navigates the user back to the Role1
-	 * home page by calling displayRole1Home() with the current stage and username. </p>
+	 * <p> Description: Returns the user to their home page. Reads activeHomePage to decide
+	 * whether to route to the Admin home (1) or Role1 home (any other value). </p>
 	 *
 	 */
 	protected static void performBack() {
-		// Navigate back to the Role1 home page passing the current stage and logged-in username
-		guiRole1.ViewRole1Home.displayRole1Home(ViewDiscussion.theStage,
-				guiRole1.ViewRole1Home.theUser);
+		if (FoundationsMain.activeHomePage == 1) {
+			guiAdminHome.ViewAdminHome.displayAdminHome(
+				ViewDiscussion.theStage, ViewDiscussion.theUser);
+		} else {
+			guiRole1.ViewRole1Home.displayRole1Home(
+				ViewDiscussion.theStage, ViewDiscussion.theUser);
+		}
 	}
-	
+
+
 	/*-*******************************************************************************************
 
-	Image methods
+	Private helper methods
 
 	**********************************************************************************************/
-	
+
 	/*******
-	 * <p> Method: performAddImage(Stage stage) </p>
+	 * <p> Method: setError(String message) </p>
 	 *
-	 * <p> Description: Opens a FileChooser for the user to select an image, saves it to
-	 * the database via saveImageEntry, and refreshes the image grid. </p>
+	 * <p> Description: Sets the error message label in ViewDiscussion with the provided text.
+	 * Centralises all error reporting through a single call. </p>
 	 *
-	 * @param stage is the current JavaFX Stage needed for the FileChooser dialog.
+	 * @param message is a String that specifies the error message to display.
 	 *
 	 */
-	protected static void performAddImage(javafx.stage.Stage stage) {
-	    javafx.stage.FileChooser fc = new javafx.stage.FileChooser();
-	    fc.setTitle("Select Image");
-	    fc.getExtensionFilters().add(
-	        new javafx.stage.FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.jpeg"));
-	    java.io.File home = new java.io.File(System.getProperty("user.home"), "Downloads");
-	    if (home.exists()) fc.setInitialDirectory(home);
-
-	    java.io.File selected = fc.showOpenDialog(stage);
-	    if (selected != null) {
-	        try (java.io.FileInputStream fis = new java.io.FileInputStream(selected)) {
-	            javafx.scene.image.Image img = new javafx.scene.image.Image(fis);
-	            java.util.ArrayList<guiForum.comment> emptyComments = new java.util.ArrayList<>();
-	            theDatabase.saveImageEntry(
-	                ViewDiscussion.theUser.getUserName(),
-	                selected.getName(),
-	                img,
-	                emptyComments,
-	                0, 0
-	            );
-	            refreshImageGrid();
-	        } catch (java.io.IOException e) {
-	            ViewDiscussion.label_ErrorMessage.setText("Error loading image: " + e.getMessage());
-	        }
-	    }
+	private static void setError(String message) {
+		ViewDiscussion.label_ErrorMessage.setText("Error: " + message);
 	}
 
+
 	/*******
-	 * <p> Method: refreshImageGrid() </p>
+	 * <p> Method: setSuccess(String message) </p>
 	 *
-	 * <p> Description: Loads all image entries from the database and rebuilds the image
-	 * grid in the ViewDiscussion scroll pane. Each image shows as a clickable thumbnail
-	 * with filename and uploader beneath it, plus a Delete button. </p>
+	 * <p> Description: Sets the status label in ViewDiscussion with a success confirmation
+	 * message. Centralises all success reporting through a single call. </p>
+	 *
+	 * @param message is a String that specifies the success message to display.
 	 *
 	 */
-	protected static void refreshImageGrid() {
-	    ViewDiscussion.grid_Images.getChildren().clear();
+	private static void setSuccess(String message) {
+		ViewDiscussion.label_ErrorMessage.setTextFill(javafx.scene.paint.Color.web("#6bcb77"));
+		ViewDiscussion.label_ErrorMessage.setText(message);
+	}
 
-	    java.util.HashMap<guiForum.png, java.util.ArrayList<guiForum.comment>> data =
-	        theDatabase.loadImageEntries();
-	    data.remove(null);
 
-	    int col = 0, row = 0;
-	    for (java.util.Map.Entry<guiForum.png, java.util.ArrayList<guiForum.comment>> entry
-	            : data.entrySet()) {
-	        final guiForum.png currentPng = entry.getKey();
-
-	        javafx.scene.image.ImageView iv =
-	            new javafx.scene.image.ImageView(currentPng.get_pic());
-	        iv.setFitWidth(80);
-	        iv.setFitHeight(80);
-	        iv.setPreserveRatio(true);
-
-	        javafx.scene.control.Label info =
-	            new javafx.scene.control.Label(
-	                currentPng.get_filename() + "\n" + currentPng.get_user());
-	        info.setWrapText(true);
-	        info.setStyle("-fx-font-size: 11px;");
-
-	        javafx.scene.control.Button btnImg = new javafx.scene.control.Button();
-	        btnImg.setGraphic(iv);
-	        btnImg.setOnAction(e ->
-	            guiComment.ViewComment.displayComment(
-	                ViewDiscussion.theStage, ViewDiscussion.theUser, currentPng));
-
-	        javafx.scene.control.Button btnDel = new javafx.scene.control.Button("Delete");
-	        btnDel.setStyle("-fx-font-size: 11px;");
-	        btnDel.setOnAction(e -> {
-	            theDatabase.deleteImageEntry(currentPng.get_filename());
-	            refreshImageGrid();
-	        });
-
-	        javafx.scene.layout.VBox vbox = new javafx.scene.layout.VBox(4,
-	            btnImg, info, btnDel);
-	        vbox.setAlignment(javafx.geometry.Pos.CENTER);
-
-	        ViewDiscussion.grid_Images.add(vbox, col, row);
-	        col++;
-	        if (col == 4) { col = 0; row++; }
-	    }
+	/*******
+	 * <p> Method: clearPostFields() </p>
+	 *
+	 * <p> Description: Clears the post input fields (Author, Title, Body) and resets the
+	 * toggle to TEXT after any successful post CRUD operation. </p>
+	 *
+	 */
+	private static void clearPostFields() {
+		ViewDiscussion.text_Author.setText("");
+		ViewDiscussion.text_Title.setText("");
+		ViewDiscussion.text_Body.setText("");
+		ViewDiscussion.radio_Text.setSelected(true);
+		ViewDiscussion.label_ImageFile.setText("No file selected.");
+		pendingImageFile = null;
 	}
 
 }

@@ -19,6 +19,7 @@ module FoundationsF26 {
     opens guiDeleteUser to javafx.graphics, javafx.fxml;
     opens guiSetOnetimePassword to javafx.graphics, javafx.fxml;
     opens guiForcePasswordReset to javafx.graphics, javafx.fxml;
+    opens guiDiscussion to javafx.graphics, javafx.fxml;
     opens passwordPopUpWindow to javafx.graphics, javafx.fxml;
     opens passwordEvaluationTestbedMain to javafx.graphics, javafx.fxml;
     opens entityClasses to javafx.graphics, javafx.fxml;

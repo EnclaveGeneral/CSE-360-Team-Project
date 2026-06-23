@@ -5,27 +5,27 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Line;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import applicationMain.FoundationsMain;
-
-import guiDiscussion.ControllerDiscussion;
 
 /*******
  * <p> Title: ViewDiscussion Class </p>
  *
  * <p> Description: This class implements the View component of the MVC design pattern for the
- * Discussion Board page. It provides the graphical user interface for creating, reading,
- * updating, and deleting posts and replies. The page is divided into four areas: the page
- * title, the post input and list area, the reply input and list area, and the navigation
- * and error message area. This class follows the Singleton design pattern so that only one
- * instance of the page is ever created. </p>
+ * unified Discussion Board page. It provides the graphical user interface for full CRUD on
+ * text posts, create and delete for image posts, and full CRUD on text replies. This class
+ * follows the Singleton design pattern so that only one instance of the page is ever
+ * created. </p>
  *
  * <p> Copyright: Lynn Robert Carter © 2025 </p>
  *
- * @author Weiye (Richard) Zhang
+ * @author Weiye (Richard) Zhang, Joshua Sprague
  *
- * @version 2.00	2026-06-23
+ * @version 1.00	2026-06-15	Initial HW2 text-only discussion board
+ * @version 2.00	2026-06-22	Added image post section
+ * @version 3.00	2026-06-23	Unified board; text/image toggle; full CRUD for text posts/replies
  */
 public class ViewDiscussion {
 
@@ -35,79 +35,104 @@ public class ViewDiscussion {
 
 	**********************************************************************************************/
 
-	// The singleton instance — only one ViewDiscussion is ever created
 	private static ViewDiscussion theView = null;
 	private static Scene theDiscussionScene;
-	private static Pane theRootPane;
-	static Stage theStage;
-	
+	private static Pane  theRootPane;
+
+	static Stage              theStage;
 	static entityClasses.User theUser;
 
-
-	// Window dimensions pulled from FoundationsMain to ensure a consistent window size
-	private static double width = FoundationsMain.WINDOW_WIDTH;
+	private static double width  = FoundationsMain.WINDOW_WIDTH;
 	private static double height = FoundationsMain.WINDOW_HEIGHT;
+
 
 	/*-*******************************************************************************************
 
-	GUI Widgets
+	GUI Widgets — Header
 
 	**********************************************************************************************/
 
-	// Page title displayed at the top of the window
-	static Label label_PageTitle = new Label("Discussion Board");
+	static Label  label_PageTitle     = new Label("Discussion Board");
+	static Label  label_UserDetails   = new Label();
+	static Button button_AccountUpdate = new Button("Account Update");
+	static Line   line_Sep1 = new Line(20, 70, width - 20, 70);
 
-	// Error / status feedback label shown in red when validation fails
-	static Label label_ErrorMessage = new Label("");
 
-	// Section labels that identify the purpose of each area of the page
-	static Label label_Posts = new Label("Posts");
-	static Label label_Replies = new Label("Replies");
-	static Label label_Title = new Label("Title:");
-	static Label label_Body = new Label("Body:");
-	static Label label_ReplyBody = new Label("Body:");
-	static Label label_Author = new Label("Author:");
+	/*-*******************************************************************************************
 
-	// ListViews for displaying posts and replies from the database
-	static ListView<String> listView_Posts = new ListView<>();
-	static ListView<String> listView_Replies = new ListView<>();
+	GUI Widgets — Post Input Area
 
-	// Input fields for creating or editing a post
-	static TextField text_Title = new TextField();
-	static TextField text_Body = new TextField();
-	static TextField text_Author = new TextField();
-	static CheckBox check_IsPinned = new CheckBox("Pinned");
+	**********************************************************************************************/
 
-	// Input fields for creating or editing a reply
-	static TextField text_ReplyBody = new TextField();
-	static CheckBox check_IsAccepted = new CheckBox("Accepted");
+	static Label label_PostSection = new Label("Posts");
 
-	// Post CRUD buttons — each delegates to the ControllerDiscussion
+	// Shared author field used by both posts and replies
+	static Label     label_Author = new Label("Author:");
+	static TextField text_Author  = new TextField();
+
+	static Label     label_Title = new Label("Title:");
+	static TextField text_Title  = new TextField();
+
+	// Toggle: TEXT vs IMAGE
+	static ToggleGroup toggle_PostType = new ToggleGroup();
+	static RadioButton radio_Text      = new RadioButton("Text");
+	static RadioButton radio_Image     = new RadioButton("Image");
+
+	// Text body — shown when TEXT is selected
+	static Label     label_Body = new Label("Body:");
+	static TextField text_Body  = new TextField();
+
+	// Image file picker — shown when IMAGE is selected
+	static Label  label_ImageFile  = new Label("No file selected.");
+	static Button button_PickImage = new Button("Browse\u2026");
+
+	// Post CRUD buttons
+	// Note: Update is only enabled for text posts; image posts support create and delete only
 	static Button button_CreatePost = new Button("Create Post");
 	static Button button_UpdatePost = new Button("Update Post");
 	static Button button_DeletePost = new Button("Delete Post");
 
-	// Reply CRUD buttons — each delegates to the ControllerDiscussion
+	static Line line_Sep2 = new Line(20, 358, width - 20, 358);
+
+
+	/*-*******************************************************************************************
+
+	GUI Widgets — Post List
+
+	**********************************************************************************************/
+
+	static ListView<String> listView_Posts = new ListView<>();
+
+
+	/*-*******************************************************************************************
+
+	GUI Widgets — Reply Area
+
+	**********************************************************************************************/
+
+	static Label label_ReplySection = new Label("Replies");
+
+	static Label     label_ReplyBody = new Label("Body:");
+	static TextField text_ReplyBody  = new TextField();
+
+	// Reply CRUD buttons — replies are always text
 	static Button button_CreateReply = new Button("Create Reply");
 	static Button button_UpdateReply = new Button("Update Reply");
 	static Button button_DeleteReply = new Button("Delete Reply");
 
-	// Navigation button to return to the previous page
-	static Button button_Back = new Button("Back");
+	static ListView<String> listView_Replies = new ListView<>();
 
-	// Horizontal separator lines used to visually divide the page into sections
-	static javafx.scene.shape.Line line_Separator1 = new javafx.scene.shape.Line(0, 300, width, 300);
-	static javafx.scene.shape.Line line_Separator2 = new javafx.scene.shape.Line(0, 500, width, 500);
-	
-	// Image Post Area
-	static javafx.scene.shape.Line line_Separator3 =
-	        new javafx.scene.shape.Line(0, 640, FoundationsMain.WINDOW_WIDTH, 640);
-	static Label label_Images = new Label("Image Posts");
-	static javafx.scene.control.ScrollPane scrollPane_Images =
-	        new javafx.scene.control.ScrollPane();
-	static javafx.scene.layout.GridPane grid_Images =
-	        new javafx.scene.layout.GridPane();
-	static Button button_AddImage = new Button("Add Image");
+	static Line line_Sep3 = new Line(20, 615, width - 20, 615);
+
+
+	/*-*******************************************************************************************
+
+	GUI Widgets — Status and Navigation
+
+	**********************************************************************************************/
+
+	static Label  label_ErrorMessage = new Label("");
+	static Button button_Back        = new Button("Back");
 
 
 	/*-*******************************************************************************************
@@ -116,193 +141,195 @@ public class ViewDiscussion {
 
 	**********************************************************************************************/
 
-	/**********
-	 * <p> Method: displayDiscussion(Stage ps) </p>
+	/*******
+	 * <p> Method: displayDiscussion(Stage ps, User user) </p>
 	 *
-	 * <p> Description: This method is used to display the Discussion Board page. If the singleton
-	 * instance has not yet been created, it creates it by calling the private constructor. It then
-	 * sets the scene onto the stage and displays the window. This method is called from the
-	 * Role1 home page when the user navigates to the Discussion Board. </p>
+	 * <p> Description: Entry point called from Role1 and Admin home pages. Creates the singleton
+	 * on the first call; subsequent calls simply swap the scene and refresh the post list. </p>
 	 *
-	 * @param ps is the Stage object onto which this page's scene will be set and displayed. user is the 
-	 * current signed in user
+	 * @param ps   is the Stage object onto which this page's scene will be set and displayed.
+	 *
+	 * @param user is the currently logged-in User whose username is displayed in the header.
 	 *
 	 */
 	public static void displayDiscussion(Stage ps, entityClasses.User user) {
-	    theStage = ps;
-	    theUser = user;
+		theStage = ps;
+		theUser  = user;
 
-	    if (theView == null) theView = new ViewDiscussion();
+		if (theView == null) theView = new ViewDiscussion();
 
-	    theStage.setTitle("CSE 360: Discussion Board");
-	    theStage.setScene(theDiscussionScene);
-	    theStage.show();
+		label_UserDetails.setText("User: " + theUser.getUserName());
+		label_ErrorMessage.setText("");
 
-	    ControllerDiscussion.refreshPostList();
+		theStage.setTitle("CSE 360: Discussion Board");
+		theStage.setScene(theDiscussionScene);
+		theStage.show();
+
+		ControllerDiscussion.refreshPostList();
 	}
-
 
 
 	/*-*******************************************************************************************
 
-	Private constructor — initializes all GUI elements (runs once due to Singleton pattern)
+	Private constructor — initializes all GUI elements (runs once, Singleton)
 
 	**********************************************************************************************/
 
-	/**********
+	/*******
 	 * <p> Method: ViewDiscussion() </p>
 	 *
 	 * <p> Description: This private constructor initializes all elements of the graphical user
-	 * interface. It determines the location, size, font, color, and event handlers for each
+	 * interface. It determines the location, size, font, colour, and event handlers for each
 	 * GUI widget. This method is only called once due to the Singleton design pattern.
 	 * Subsequent calls to displayDiscussion() reuse the already-initialized scene. </p>
 	 *
 	 */
 	private ViewDiscussion() {
-		// Create the root pane and scene that will hold all widgets
-		theRootPane = new Pane();
+
+		theRootPane        = new Pane();
 		theDiscussionScene = new Scene(theRootPane, width, height);
+		theDiscussionScene.getStylesheets().add(
+			ViewDiscussion.class.getResource("/dark-theme.css").toExternalForm());
 
-		// GUI Area 1 - Page Title
-		setupLabelUI(label_PageTitle, "Arial", 28, width, Pos.CENTER, 0, 5);
+		// ── Header (y 8–70) ──────────────────────────────────────────────────────
+		setupLabel(label_PageTitle,     "Arial", 22, width, Pos.CENTER,        0,  10);
+		setupLabel(label_UserDetails,   "Arial", 13, 500,   Pos.BASELINE_LEFT, 20, 44);
+		setupButton(button_AccountUpdate, "Dialog", 12, 145, Pos.CENTER, 635, 37);
+		button_AccountUpdate.setOnAction((_) ->
+			guiUserUpdate.ViewUserUpdate.displayUserUpdate(theStage, theUser));
 
-		// GUI Area 2 - Post input fields and post list
-		setupLabelUI(label_Posts, "Arial", 16, 200, Pos.BASELINE_LEFT, 20, 50);
-		setupLabelUI(label_Author, "Arial", 14, 100, Pos.BASELINE_LEFT, 20, 80);
-		setupTextUI(text_Author, "Arial", 14, 200, Pos.BASELINE_LEFT, 100, 78);
+		// ── Post input (y 80–180) ─────────────────────────────────────────────────
+		setupLabel(label_PostSection, "Arial", 13, 100, Pos.BASELINE_LEFT, 20, 82);
 
-		setupLabelUI(label_Title, "Arial", 14, 100, Pos.BASELINE_LEFT, 20, 110);
-		setupTextUI(text_Title, "Arial", 14, 400, Pos.BASELINE_LEFT, 100, 108);
+		// Author and Title on the same row
+		setupLabel(label_Author, "Arial", 12, 50,  Pos.BASELINE_LEFT, 20,  108);
+		setupText (text_Author,  "Arial", 12, 170, Pos.BASELINE_LEFT, 72,  105);
+		setupLabel(label_Title,  "Arial", 12, 30,  Pos.BASELINE_LEFT, 255, 108);
+		setupText (text_Title,   "Arial", 12, 350, Pos.BASELINE_LEFT, 290, 105);
 
-		setupLabelUI(label_Body, "Arial", 14, 100, Pos.BASELINE_LEFT, 20, 140);
-		setupTextUI(text_Body, "Arial", 14, 400, Pos.BASELINE_LEFT, 100, 138);
+		// TEXT / IMAGE toggle
+		radio_Text.setToggleGroup(toggle_PostType);
+		radio_Image.setToggleGroup(toggle_PostType);
+		radio_Text.setSelected(true);
+		radio_Text.setLayoutX(20);  radio_Text.setLayoutY(133);
+		radio_Image.setLayoutX(82); radio_Image.setLayoutY(133);
 
-		// Checkbox to mark a post as pinned — positioned manually since it has no label companion
-		check_IsPinned.setLayoutX(520);
-		check_IsPinned.setLayoutY(110);
+		// Text body (default visible)
+		setupLabel(label_Body, "Arial", 12, 30,  Pos.BASELINE_LEFT, 20,  158);
+		setupText (text_Body,  "Arial", 12, 605, Pos.BASELINE_LEFT, 55,  155);
 
-		// Post ListView — displays all posts loaded from the database
-		// Clicking a post triggers selectPost() to populate the input fields and load replies
+		// Image picker (default hidden)
+		label_ImageFile.setFont(Font.font("Arial", 12));
+		label_ImageFile.setLayoutX(55);
+		label_ImageFile.setLayoutY(158);
+		label_ImageFile.setMinWidth(400);
+		setupButton(button_PickImage, "Dialog", 11, 85, Pos.CENTER, 668, 154);
+		button_PickImage.setOnAction((_) -> ControllerDiscussion.performPickImage(theStage));
+		label_ImageFile.setVisible(false);
+		button_PickImage.setVisible(false);
+
+		// Swap visible controls when toggle changes
+		toggle_PostType.selectedToggleProperty().addListener((obs, oldT, newT) -> {
+			boolean img = (newT == radio_Image);
+			label_Body.setVisible(!img);
+			text_Body.setVisible(!img);
+			label_ImageFile.setVisible(img);
+			button_PickImage.setVisible(img);
+			// Update Post disabled for image posts — no meaningful field to edit
+			button_UpdatePost.setDisable(img);
+		});
+
+		// Post CRUD buttons
+		setupButton(button_CreatePost, "Dialog", 12, 130, Pos.CENTER, 20,  183);
+		button_CreatePost.setOnAction((_) -> ControllerDiscussion.performCreatePost());
+
+		setupButton(button_UpdatePost, "Dialog", 12, 130, Pos.CENTER, 160, 183);
+		button_UpdatePost.setOnAction((_) -> ControllerDiscussion.performUpdatePost());
+
+		setupButton(button_DeletePost, "Dialog", 12, 130, Pos.CENTER, 300, 183);
+		button_DeletePost.setOnAction((_) -> ControllerDiscussion.performDeletePost());
+
+		// ── Post list (y 215–358) ─────────────────────────────────────────────────
 		listView_Posts.setLayoutX(20);
-		listView_Posts.setLayoutY(175);
+		listView_Posts.setLayoutY(215);
 		listView_Posts.setPrefWidth(760);
-		listView_Posts.setPrefHeight(120);
-		listView_Posts.setOnMouseClicked((_) -> { ControllerDiscussion.selectPost(); });
+		listView_Posts.setPrefHeight(135);
+		listView_Posts.setOnMouseClicked((_) -> ControllerDiscussion.selectPost());
 
-		// Post CRUD buttons — each button delegates its action to the ControllerDiscussion
-		setupButtonUI(button_CreatePost, "Dialog", 14, 150, Pos.CENTER, 20, 305);
-		button_CreatePost.setOnAction((_) -> { ControllerDiscussion.performCreatePost(); });
+		// ── Reply input (y 370–470) ───────────────────────────────────────────────
+		setupLabel(label_ReplySection, "Arial", 13, 100, Pos.BASELINE_LEFT, 20, 372);
 
-		setupButtonUI(button_UpdatePost, "Dialog", 14, 150, Pos.CENTER, 180, 305);
-		button_UpdatePost.setOnAction((_) -> { ControllerDiscussion.performUpdatePost(); });
+		setupLabel(label_ReplyBody, "Arial", 12, 30,  Pos.BASELINE_LEFT, 20,  398);
+		setupText (text_ReplyBody,  "Arial", 12, 605, Pos.BASELINE_LEFT, 55,  395);
 
-		setupButtonUI(button_DeletePost, "Dialog", 14, 150, Pos.CENTER, 340, 305);
-		button_DeletePost.setOnAction((_) -> { ControllerDiscussion.performDeletePost(); });
+		// Reply CRUD buttons
+		setupButton(button_CreateReply, "Dialog", 12, 130, Pos.CENTER, 20,  425);
+		button_CreateReply.setOnAction((_) -> ControllerDiscussion.performCreateReply());
 
-		// GUI Area 3 - Reply input fields and reply list
-		setupLabelUI(label_Replies, "Arial", 16, 200, Pos.BASELINE_LEFT, 20, 345);
+		setupButton(button_UpdateReply, "Dialog", 12, 130, Pos.CENTER, 160, 425);
+		button_UpdateReply.setOnAction((_) -> ControllerDiscussion.performUpdateReply());
 
-		// label_ReplyBody is a separate label object from label_Body to avoid repositioning conflicts
-		setupLabelUI(label_ReplyBody, "Arial", 14, 100, Pos.BASELINE_LEFT, 20, 375);
-		setupTextUI(text_ReplyBody, "Arial", 14, 500, Pos.BASELINE_LEFT, 100, 373);
+		setupButton(button_DeleteReply, "Dialog", 12, 130, Pos.CENTER, 300, 425);
+		button_DeleteReply.setOnAction((_) -> ControllerDiscussion.performDeleteReply());
 
-		// Checkbox to mark a reply as the accepted answer
-		check_IsAccepted.setLayoutX(620);
-		check_IsAccepted.setLayoutY(375);
-
-		// Reply ListView — displays only replies belonging to the currently selected post
+		// ── Reply list (y 458–615) ────────────────────────────────────────────────
 		listView_Replies.setLayoutX(20);
-		listView_Replies.setLayoutY(405);
+		listView_Replies.setLayoutY(458);
 		listView_Replies.setPrefWidth(760);
-		listView_Replies.setPrefHeight(100);
-		listView_Replies.setOnMouseClicked((_) -> { ControllerDiscussion.selectReply(); });
+		listView_Replies.setPrefHeight(150);
+		listView_Replies.setOnMouseClicked((_) -> ControllerDiscussion.selectReply());
 
-		// Reply CRUD buttons — each button delegates its action to the ControllerDiscussion
-		setupButtonUI(button_CreateReply, "Dialog", 14, 150, Pos.CENTER, 20, 515);
-		button_CreateReply.setOnAction((_) -> { ControllerDiscussion.performCreateReply(); });
+		// ── Status + navigation (y 623–710) ──────────────────────────────────────
+		label_ErrorMessage.setTextFill(Color.web("#ff6b6b"));
+		setupLabel(label_ErrorMessage, "Arial", 12, width - 160, Pos.BASELINE_LEFT, 20, 625);
+		setupButton(button_Back, "Dialog", 12, 110, Pos.CENTER, 660, 620);
+		button_Back.setOnAction((_) -> ControllerDiscussion.performBack());
 
-		setupButtonUI(button_UpdateReply, "Dialog", 14, 150, Pos.CENTER, 180, 515);
-		button_UpdateReply.setOnAction((_) -> { ControllerDiscussion.performUpdateReply(); });
-
-		setupButtonUI(button_DeleteReply, "Dialog", 14, 150, Pos.CENTER, 340, 515);
-		button_DeleteReply.setOnAction((_) -> { ControllerDiscussion.performDeleteReply(); });
-
-		// GUI Area 4 - Error message and navigation
-		// Red text is used for the error label so validation failures are immediately visible
-		label_ErrorMessage.setTextFill(Color.RED);
-		setupLabelUI(label_ErrorMessage, "Arial", 14, width, Pos.BASELINE_LEFT, 20, 565);
-
-		setupButtonUI(button_Back, "Dialog", 14, 150, Pos.CENTER, 20, 600);
-		button_Back.setOnAction((_) -> { ControllerDiscussion.performBack(); });
-
-		// Add all widgets to the root pane so they are rendered on screen
+		// Add all widgets to the pane
 		theRootPane.getChildren().addAll(
-			label_PageTitle,
+			label_PageTitle, label_UserDetails, button_AccountUpdate, line_Sep1,
+			label_PostSection,
 			label_Author, text_Author,
-			label_Title, text_Title,
-			label_Body, label_ReplyBody, text_Body,
-			check_IsPinned,
-			label_Posts, listView_Posts,
+			label_Title,  text_Title,
+			radio_Text, radio_Image,
+			label_Body, text_Body,
+			label_ImageFile, button_PickImage,
 			button_CreatePost, button_UpdatePost, button_DeletePost,
-			line_Separator1,
-			label_Replies, text_ReplyBody, check_IsAccepted,
-			listView_Replies,
+			listView_Posts,
+			line_Sep2,
+			label_ReplySection,
+			label_ReplyBody, text_ReplyBody,
 			button_CreateReply, button_UpdateReply, button_DeleteReply,
-			line_Separator2,
-			label_ErrorMessage,
-			button_Back
-		);
-		
-		// Image section
-		setupLabelUI(label_Images, "Arial", 16, 200, Pos.BASELINE_LEFT, 20, 645);
-
-		setupButtonUI(button_AddImage, "Dialog", 14, 150, Pos.CENTER, 200, 643);
-		button_AddImage.setOnAction((_) -> { ControllerDiscussion.performAddImage(theStage); });
-
-		grid_Images.setHgap(30);
-		grid_Images.setVgap(20);
-
-		scrollPane_Images.setContent(grid_Images);
-		scrollPane_Images.setLayoutX(20);
-		scrollPane_Images.setLayoutY(670);
-		scrollPane_Images.setPrefWidth(760);
-		scrollPane_Images.setPrefHeight(60);
-		scrollPane_Images.setHbarPolicy(
-		    javafx.scene.control.ScrollPane.ScrollBarPolicy.AS_NEEDED);
-		scrollPane_Images.setVbarPolicy(
-		    javafx.scene.control.ScrollPane.ScrollBarPolicy.AS_NEEDED);
-
-		theRootPane.getChildren().addAll(
-		    line_Separator3, label_Images, button_AddImage, scrollPane_Images
+			listView_Replies,
+			line_Sep3,
+			label_ErrorMessage, button_Back
 		);
 
-		database.Database db = applicationMain.FoundationsMain.database;
-		db.createImageEntriesTable();
-		ControllerDiscussion.refreshImageGrid();
-
+		// Ensure discussion tables exist
+		FoundationsMain.database.createDiscussionTables();
 	}
 
 
 	/*-*******************************************************************************************
 
-	Helper methods to reduce code length
+	Helper methods
 
 	**********************************************************************************************/
 
-	/**********
-	 * <p> Method: setupLabelUI </p>
+	/*******
+	 * <p> Method: setupLabel </p>
 	 *
 	 * <p> Description: Private local method to initialize the standard fields for a Label. </p>
 	 *
-	 * @param l		The Label object to be initialized
-	 * @param ff	The font family to be used
-	 * @param f		The size of the font to be used
-	 * @param w		The minimum width of the Label
-	 * @param p		The alignment of the text within the Label
-	 * @param x		The x-coordinate of the Label's position on the pane
-	 * @param y		The y-coordinate of the Label's position on the pane
+	 * @param l   The Label object to be initialized
+	 * @param ff  The font family to be used
+	 * @param f   The size of the font to be used
+	 * @param w   The minimum width of the Label
+	 * @param p   The alignment (e.g. left, centered, or right)
+	 * @param x   The location from the left edge (x axis)
+	 * @param y   The location from the top (y axis)
 	 */
-	private void setupLabelUI(Label l, String ff, double f, double w, Pos p, double x, double y) {
+	private void setupLabel(Label l, String ff, double f, double w, Pos p, double x, double y) {
 		l.setFont(Font.font(ff, f));
 		l.setMinWidth(w);
 		l.setAlignment(p);
@@ -311,20 +338,20 @@ public class ViewDiscussion {
 	}
 
 
-	/**********
-	 * <p> Method: setupTextUI </p>
+	/*******
+	 * <p> Method: setupText </p>
 	 *
 	 * <p> Description: Private local method to initialize the standard fields for a TextField. </p>
 	 *
-	 * @param t		The TextField object to be initialized
-	 * @param ff	The font family to be used
-	 * @param f		The size of the font to be used
-	 * @param w		The minimum width of the TextField
-	 * @param p		The alignment of the text within the TextField
-	 * @param x		The x-coordinate of the TextField's position on the pane
-	 * @param y		The y-coordinate of the TextField's position on the pane
+	 * @param t   The TextField object to be initialized
+	 * @param ff  The font family to be used
+	 * @param f   The size of the font to be used
+	 * @param w   The minimum width of the TextField
+	 * @param p   The alignment (e.g. left, centered, or right)
+	 * @param x   The location from the left edge (x axis)
+	 * @param y   The location from the top (y axis)
 	 */
-	private void setupTextUI(TextField t, String ff, double f, double w, Pos p, double x, double y) {
+	private void setupText(TextField t, String ff, double f, double w, Pos p, double x, double y) {
 		t.setFont(Font.font(ff, f));
 		t.setMinWidth(w);
 		t.setAlignment(p);
@@ -333,20 +360,20 @@ public class ViewDiscussion {
 	}
 
 
-	/**********
-	 * <p> Method: setupButtonUI </p>
+	/*******
+	 * <p> Method: setupButton </p>
 	 *
 	 * <p> Description: Private local method to initialize the standard fields for a Button. </p>
 	 *
-	 * @param b		The Button object to be initialized
-	 * @param ff	The font family to be used
-	 * @param f		The size of the font to be used
-	 * @param w		The minimum width of the Button
-	 * @param p		The alignment of the text within the Button
-	 * @param x		The x-coordinate of the Button's position on the pane
-	 * @param y		The y-coordinate of the Button's position on the pane
+	 * @param b   The Button object to be initialized
+	 * @param ff  The font family to be used
+	 * @param f   The size of the font to be used
+	 * @param w   The minimum width of the Button
+	 * @param p   The alignment (e.g. left, centered, or right)
+	 * @param x   The location from the left edge (x axis)
+	 * @param y   The location from the top (y axis)
 	 */
-	private void setupButtonUI(Button b, String ff, double f, double w, Pos p, double x, double y) {
+	private void setupButton(Button b, String ff, double f, double w, Pos p, double x, double y) {
 		b.setFont(Font.font(ff, f));
 		b.setMinWidth(w);
 		b.setAlignment(p);

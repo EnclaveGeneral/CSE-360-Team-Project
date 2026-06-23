@@ -1,4 +1,18 @@
-/* Text fields and input controls */
+/* ── Root and pane background ─────────────────────────────────── */
+.root {
+    -fx-background-color: #2b2b2b;
+}
+
+Pane {
+    -fx-background-color: #2b2b2b;
+}
+
+/* ── General label colour ─────────────────────────────────────── */
+.label {
+    -fx-text-fill: #e0e0e0;
+}
+
+/* ── Text fields, password fields, combo boxes ────────────────── */
 .text-field, .password-field, .combo-box {
     -fx-background-color: #3c3f41;
     -fx-text-fill: #e0e0e0;
@@ -8,57 +22,120 @@
     -fx-background-radius: 3;
 }
 
-
-/* Scroll pane background */
-.scroll-pane {
-    -fx-background: #2b2b2b;
-}
-
-/* Tooltip styling */
-.tooltip {
-    -fx-background-color: #3c3f41;
-    -fx-text-fill: #e0e0e0;
-}
-
-/* General text color for labels */
-.label {
-    -fx-text-fill: #e0e0e0;
-}
-
-/* Root pane background */
-.root {
-    -fx-background-color: #2b2b2b;
-}
-
-Pane {
-    -fx-background-color: #2b2b2b;
-}
-
-/* Buttons */
+/* ── Buttons ──────────────────────────────────────────────────── */
 .button {
     -fx-background-color: #3c3f41;
     -fx-text-fill: #e0e0e0;
     -fx-border-color: #555555;
+    -fx-border-radius: 3;
+    -fx-background-radius: 3;
 }
 
-/* ComboBox */
+.button:hover {
+    -fx-background-color: #4c5052;
+}
+
+.button:pressed {
+    -fx-background-color: #2d5a8e;
+}
+
+/* ── Radio buttons ────────────────────────────────────────────── */
+.radio-button {
+    -fx-text-fill: #e0e0e0;
+}
+
+.radio-button .radio {
+    -fx-background-color: #3c3f41;
+    -fx-border-color: #555555;
+    -fx-border-radius: 50;
+    -fx-background-radius: 50;
+}
+
+.radio-button:selected .radio {
+    -fx-background-color: #3c3f41;
+    -fx-border-color: #888888;
+}
+
+.radio-button:selected .dot {
+    -fx-background-color: #e0e0e0;
+    -fx-background-radius: 50;
+}
+
+/* ── Check boxes ──────────────────────────────────────────────── */
+.check-box {
+    -fx-text-fill: #e0e0e0;
+}
+
+.check-box .box {
+    -fx-background-color: #3c3f41;
+    -fx-border-color: #555555;
+    -fx-border-radius: 3;
+    -fx-background-radius: 3;
+}
+
+.check-box:selected .mark {
+    -fx-background-color: #e0e0e0;
+}
+
+/* ── List views ───────────────────────────────────────────────── */
+.list-view {
+    -fx-background-color: #3c3f41;
+    -fx-border-color: #555555;
+    -fx-border-radius: 3;
+    -fx-background-radius: 3;
+}
+
+.list-view .list-cell {
+    -fx-background-color: #3c3f41;
+    -fx-text-fill: #e0e0e0;
+}
+
+.list-view .list-cell:hover {
+    -fx-background-color: #4c5052;
+}
+
+.list-view .list-cell:selected {
+    -fx-background-color: #2d5a8e;
+    -fx-text-fill: #ffffff;
+}
+
+/* ── Scroll pane ──────────────────────────────────────────────── */
+.scroll-pane {
+    -fx-background: #2b2b2b;
+    -fx-background-color: #2b2b2b;
+}
+
+.scroll-pane .viewport {
+    -fx-background-color: #2b2b2b;
+}
+
+/* ── Combo box specifics ──────────────────────────────────────── */
 .combo-box {
-    -fx-text-fill: white;
+    -fx-text-fill: #e0e0e0;
     -fx-background-color: #3c3f41;
 }
 
-
 .combo-box .list-cell {
-	-fx-text-fill: #e0e0e0;
-	-fx-background-color: #3c3f41;
-
+    -fx-text-fill: #e0e0e0;
+    -fx-background-color: #3c3f41;
 }
 
 .combo-box-popup .list-cell {
-    -fx-text-fill: white;
+    -fx-text-fill: #e0e0e0;
     -fx-background-color: #2b2b2b;
 }
 
 .combo-box-popup {
     -fx-background-color: #2b2b2b;
+}
+
+/* ── Tooltip ──────────────────────────────────────────────────── */
+.tooltip {
+    -fx-background-color: #3c3f41;
+    -fx-text-fill: #e0e0e0;
+}
+
+/* ── Separator / divider lines ────────────────────────────────── */
+.separator .line {
+    -fx-border-color: #555555;
 }
