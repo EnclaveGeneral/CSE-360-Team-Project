@@ -3,10 +3,16 @@ package guiDiscussion;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
+
 import database.Database;
 import entityClasses.DiscussionPost;
 import entityClasses.DiscussionReply;
 import applicationMain.FoundationsMain;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.ButtonBar.ButtonData;
+import javafx.scene.control.ButtonType;
 import javafx.stage.Stage;
 
 /*******
@@ -308,7 +314,23 @@ public class ControllerDiscussion {
 	 */
 	protected static void performDeletePost() {
 		if (selectedPostId == -1) { setError("Please select a post to delete."); return; }
+		
+		// confirmation
+		Alert alert = new Alert(AlertType.INFORMATION);
+        alert.setTitle("confirmation");
+        alert.setHeaderText("confirmation");
+        alert.setContentText("are you sure you want to delete the post?");
 
+        ButtonType buttonYes = new ButtonType("Yes", ButtonData.YES);
+        ButtonType buttonNo = new ButtonType("No", ButtonData.NO);
+        alert.getButtonTypes().setAll(buttonYes, buttonNo);
+
+        Optional<ButtonType> result = alert.showAndWait();
+
+        if (result.isPresent() && result.get() == buttonNo) {
+            return;
+        }
+		
 		theDatabase.deletePost(selectedPostId);
 		selectedPostId  = -1;
 		selectedReplyId = -1;
