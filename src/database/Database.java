@@ -100,7 +100,7 @@ public class Database {
 			connection = DriverManager.getConnection(DB_URL, USER, PASS);
 			statement = connection.createStatement(); 
 			// You can use this command to clear the database and restart from fresh.
-			statement.execute("DROP ALL OBJECTS");
+			//statement.execute("DROP ALL OBJECTS");
 
 			createTables();  // Create the necessary tables if they don't exist
 		} catch (ClassNotFoundException e) {
@@ -1535,6 +1535,7 @@ public class Database {
 	            "image_filename VARCHAR(255), " +
 	            "image_data BLOB, " +
 	            "is_pinned BOOL DEFAULT FALSE, " +
+	            "tags VARCHAR(255), " +
 	            "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)";
 
 	    String repliesSql = "CREATE TABLE IF NOT EXISTS replies (" +
@@ -1562,15 +1563,17 @@ public class Database {
 	 * @param author   the username of the poster
 	 * @param title    the post title
 	 * @param body     the post body text
+	 * @param tags      the tags for post
 	 * @return the generated post id, or -1 on failure
 	 */
-	public int saveTextPost(String author, String title, String body, boolean isPinned) {
-	    String sql = "INSERT INTO posts (author, title, body, post_type, is_pinned) VALUES (?, ?, ?, 'text', ?)";
+	public int saveTextPost(String author, String title, String body, boolean isPinned, String tags) {
+	    String sql = "INSERT INTO posts (author, title, body, post_type, is_pinned, tags) VALUES (?, ?, ?, 'text', ?, ?)";
 	    try (PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 	        ps.setString(1, author);
 	        ps.setString(2, title);
 	        ps.setString(3, body);
 	        ps.setBoolean(4, isPinned);
+	        ps.setString(5, tags);
 	        ps.executeUpdate();
 	        try (ResultSet keys = ps.getGeneratedKeys()) {
 	            if (keys.next()) return keys.getInt(1);
@@ -1591,10 +1594,11 @@ public class Database {
 	 * @param title     the post title / caption
 	 * @param filename  the original filename of the image
 	 * @param img       the JavaFX Image object to persist
+	 * @param tags      the tags for post
 	 * @return the generated post id, or -1 on failure
 	 */
-	public int saveImagePost(String author, String title, String filename, javafx.scene.image.Image img, boolean isPinned) {
-	    String sql = "INSERT INTO posts (author, title, post_type, image_filename, image_data, is_pinned) VALUES (?, ?, 'image', ?, ?, ?)";
+	public int saveImagePost(String author, String title, String filename, javafx.scene.image.Image img, boolean isPinned, String tags) {
+	    String sql = "INSERT INTO posts (author, title, post_type, image_filename, image_data, is_pinned, tags) VALUES (?, ?, 'image', ?, ?, ?, ?)";
 	    try (PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 	        ps.setString(1, author);
 	        ps.setString(2, title);
@@ -1606,7 +1610,8 @@ public class Database {
 	        byte[] bytes = baos.toByteArray();
 	        ps.setBinaryStream(4, new ByteArrayInputStream(bytes), bytes.length);
 	        ps.setBoolean(5, isPinned);
-
+	        ps.setString(6, tags);
+	        
 	        ps.executeUpdate();
 	        try (ResultSet keys = ps.getGeneratedKeys()) {
 	            if (keys.next()) return keys.getInt(1);
@@ -1627,7 +1632,7 @@ public class Database {
 	 */
 	public java.util.List<entityClasses.DiscussionPost> getAllPosts() {
 	    java.util.List<entityClasses.DiscussionPost> list = new java.util.ArrayList<>();
-	    String sql = "SELECT id, author, title, body, post_type, image_filename, image_data, is_pinned, created_at FROM posts ORDER BY created_at DESC";
+	    String sql = "SELECT id, author, title, body, post_type, image_filename, image_data, is_pinned, tags, created_at FROM posts ORDER BY created_at DESC";
 	    try (PreparedStatement ps = connection.prepareStatement(sql);
 	         ResultSet rs = ps.executeQuery()) {
 	        while (rs.next()) {
@@ -1639,6 +1644,7 @@ public class Database {
 	            String  imgFile  = rs.getString("image_filename");
 	            Blob    blob     = rs.getBlob("image_data");
 	            boolean isPinned = rs.getBoolean("is_pinned");
+	            String tags = rs.getString("tags");
 	            String  created  = rs.getString("created_at");
 
 	            javafx.scene.image.Image img = null;
@@ -1646,7 +1652,7 @@ public class Database {
 	                img = new javafx.scene.image.Image(blob.getBinaryStream());
 	            }
 	            list.add(new entityClasses.DiscussionPost(
-	                id, author, title, body, type, imgFile, img, isPinned, created));
+	                id, author, title, body, type, imgFile, img, isPinned, created, tags));
 	        }
 	    } catch (SQLException e) {
 	        e.printStackTrace();
