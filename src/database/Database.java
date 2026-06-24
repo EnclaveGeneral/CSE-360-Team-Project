@@ -100,7 +100,7 @@ public class Database {
 			connection = DriverManager.getConnection(DB_URL, USER, PASS);
 			statement = connection.createStatement(); 
 			// You can use this command to clear the database and restart from fresh.
-			//statement.execute("DROP ALL OBJECTS");
+			statement.execute("DROP ALL OBJECTS");
 
 			createTables();  // Create the necessary tables if they don't exist
 		} catch (ClassNotFoundException e) {
@@ -1730,16 +1730,19 @@ public class Database {
 	 * @param title    is a String that specifies the new title for this post.
 	 *
 	 * @param body     is a String that specifies the new body text for this post.
+	 * 
+	 * @param tags     is a String that specifies the space-separated tags for this post.
 	 *
 	 * @param isPinned is a boolean that specifies whether this post should be pinned.
 	 *
 	 */
-	public void updatePost(int postId, String title, String body, boolean isPinned) {
+	public void updatePost(int postId, String title, String body, String tags, boolean isPinned) {
 	    String sql = "UPDATE posts SET title = ?, body = ?, is_pinned = ? WHERE id = ?";
 	    try (PreparedStatement ps = connection.prepareStatement(sql)) {
 	        ps.setString(1, title);
 	        ps.setString(2, body);
 	        ps.setBoolean(3, isPinned);
+	        ps.setString(4, tags);
 	        ps.setInt(4, postId);
 	        ps.executeUpdate();
 	    } catch (SQLException e) {

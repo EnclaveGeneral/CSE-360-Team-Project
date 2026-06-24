@@ -99,8 +99,9 @@ public class ControllerDiscussion {
 	        HBox postBox = new HBox(10);
 	        postBox.setPadding(new Insets(5));
 	        postBox.getChildren().add(postLabel);
-
-	        String[] tags = p.getTags().split(" ");
+	        
+	        String rawTags = p.getTags();
+	        String[] tags = (rawTags != null && !rawTags.isEmpty()) ? rawTags.split(" ") : new String[0];
 	        for (String tag : tags) {
 	            Button tagButton = new Button("#" + tag);
 	            tagButton.setOnAction(event -> filter_by_tags(tag));
@@ -117,7 +118,9 @@ public class ControllerDiscussion {
 	    ViewDiscussion.set_reset(true);
 	    
 	    for (DiscussionPost p : posts) {
-	        String[] tags = p.getTags().split(" ");
+	    	
+	    	String rawTags = p.getTags();
+	        String[] tags = (rawTags != null && !rawTags.isEmpty()) ? rawTags.split(" ") : new String[0];
 	        if (!Arrays.asList(tags).contains(tag)) {
 	            continue;
 	        }
@@ -201,6 +204,8 @@ public class ControllerDiscussion {
 			ViewDiscussion.radio_Text.setSelected(true);
 			ViewDiscussion.text_Body.setText(p.getBody() != null ? p.getBody() : "");
 		}
+		
+		ViewDiscussion.text_tags.setText(p.getTags() != null ? p.getTags() : "");
 
 		ViewDiscussion.label_ErrorMessage.setText(
 			"Selected: \"" + p.getTitle() + "\" (" + p.getPostType() + " post)");
@@ -346,8 +351,9 @@ public class ControllerDiscussion {
 
 		String bodyErr = ModelDiscussion.validateBody(body);
 		if (!bodyErr.isEmpty()) { setError(bodyErr); return; }
-
-		theDatabase.updatePost(selectedPostId, title, body, false);
+		
+		String tags = ViewDiscussion.text_tags.getText().trim();
+		theDatabase.updatePost(selectedPostId, title, body, tags, false);
 		clearPostFields();
 		setSuccess("Post updated successfully!");
 		refreshPostList();
@@ -529,7 +535,7 @@ public class ControllerDiscussion {
 	/*******
 	 * <p> Method: clearPostFields() </p>
 	 *
-	 * <p> Description: Clears the post input fields (Author, Title, Body) and resets the
+	 * <p> Description: Clears the post input fields (Author, Title, Body, Tag) and resets the
 	 * toggle to TEXT after any successful post CRUD operation. </p>
 	 *
 	 */
@@ -539,6 +545,7 @@ public class ControllerDiscussion {
 		ViewDiscussion.text_Body.setText("");
 		ViewDiscussion.radio_Text.setSelected(true);
 		ViewDiscussion.label_ImageFile.setText("No file selected.");
+		ViewDiscussion.text_tags.setText("");
 		pendingImageFile = null;
 	}
 
