@@ -1737,13 +1737,13 @@ public class Database {
 	 *
 	 */
 	public void updatePost(int postId, String title, String body, String tags, boolean isPinned) {
-	    String sql = "UPDATE posts SET title = ?, body = ?, is_pinned = ? WHERE id = ?";
+	    String sql = "UPDATE posts SET title = ?, body = ?, is_pinned = ?, tags = ? WHERE id = ?";
 	    try (PreparedStatement ps = connection.prepareStatement(sql)) {
 	        ps.setString(1, title);
 	        ps.setString(2, body);
 	        ps.setBoolean(3, isPinned);
 	        ps.setString(4, tags);
-	        ps.setInt(4, postId);
+	        ps.setInt(5, postId);
 	        ps.executeUpdate();
 	    } catch (SQLException e) {
 	        e.printStackTrace();
