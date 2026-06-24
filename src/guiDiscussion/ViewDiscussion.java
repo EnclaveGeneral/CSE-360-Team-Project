@@ -3,6 +3,7 @@ package guiDiscussion;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
@@ -41,6 +42,8 @@ public class ViewDiscussion {
 
 	static Stage              theStage;
 	static entityClasses.User theUser;
+	
+	private static boolean reset = false;
 
 	private static double width  = FoundationsMain.WINDOW_WIDTH;
 	private static double height = FoundationsMain.WINDOW_HEIGHT;
@@ -72,6 +75,9 @@ public class ViewDiscussion {
 
 	static Label     label_Title = new Label("Title:");
 	static TextField text_Title  = new TextField();
+	
+	static Label     label_Tags = new Label("Tags:");
+	static TextField text_tags  = new TextField();
 
 	// Toggle: TEXT vs IMAGE
 	static ToggleGroup toggle_PostType = new ToggleGroup();
@@ -89,6 +95,7 @@ public class ViewDiscussion {
 	// Post CRUD buttons
 	// Note: Update is only enabled for text posts; image posts support create and delete only
 	static Button button_CreatePost = new Button("Create Post");
+	static Button button_reset_filter = new Button("reset filter");
 	static Button button_UpdatePost = new Button("Update Post");
 	static Button button_DeletePost = new Button("Delete Post");
 
@@ -101,7 +108,7 @@ public class ViewDiscussion {
 
 	**********************************************************************************************/
 
-	static ListView<String> listView_Posts = new ListView<>();
+	static ListView<HBox> listView_Posts = new ListView<>();
 
 
 	/*-*******************************************************************************************
@@ -206,6 +213,8 @@ public class ViewDiscussion {
 		setupText (text_Author,  "Arial", 12, 170, Pos.BASELINE_LEFT, 72,  105);
 		setupLabel(label_Title,  "Arial", 12, 30,  Pos.BASELINE_LEFT, 255, 108);
 		setupText (text_Title,   "Arial", 12, 350, Pos.BASELINE_LEFT, 290, 105);
+		setupLabel(label_Tags,  "Arial", 12, 30,  Pos.BASELINE_LEFT, 255, 133);
+		setupText (text_tags,   "Arial", 12, 350, Pos.BASELINE_LEFT, 290, 133);
 
 		// TEXT / IMAGE toggle
 		radio_Text.setToggleGroup(toggle_PostType);
@@ -242,7 +251,10 @@ public class ViewDiscussion {
 		// Post CRUD buttons
 		setupButton(button_CreatePost, "Dialog", 12, 130, Pos.CENTER, 20,  183);
 		button_CreatePost.setOnAction((_) -> ControllerDiscussion.performCreatePost());
-
+		
+		setupButton(button_reset_filter, "Dialog", 12, 130, Pos.CENTER, 450,  183);
+		button_reset_filter.setOnAction((_) -> ControllerDiscussion.refreshPostList());
+		
 		setupButton(button_UpdatePost, "Dialog", 12, 130, Pos.CENTER, 160, 183);
 		button_UpdatePost.setOnAction((_) -> ControllerDiscussion.performUpdatePost());
 
@@ -293,6 +305,7 @@ public class ViewDiscussion {
 			label_Title,  text_Title,
 			radio_Text, radio_Image,
 			label_Body, text_Body,
+			label_Tags, text_tags,
 			label_ImageFile, button_PickImage,
 			button_CreatePost, button_UpdatePost, button_DeletePost,
 			listView_Posts,
@@ -307,6 +320,17 @@ public class ViewDiscussion {
 
 		// Ensure discussion tables exist
 		FoundationsMain.database.createDiscussionTables();
+	}
+	
+	public static void set_reset(boolean c){
+		reset = c;
+		
+		if(reset) {
+			theRootPane.getChildren().add(button_reset_filter);
+		}
+		else {
+			theRootPane.getChildren().remove(button_reset_filter);
+		}
 	}
 
 

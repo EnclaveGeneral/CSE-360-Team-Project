@@ -2,6 +2,7 @@ package guiDiscussion;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -9,10 +10,14 @@ import database.Database;
 import entityClasses.DiscussionPost;
 import entityClasses.DiscussionReply;
 import applicationMain.FoundationsMain;
+import javafx.geometry.Insets;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar.ButtonData;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.Label;
+import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 
 /*******
@@ -82,13 +87,56 @@ public class ControllerDiscussion {
 	 *
 	 */
 	protected static void refreshPostList() {
-		ViewDiscussion.listView_Posts.getItems().clear();
-		List<DiscussionPost> posts = theDatabase.getAllPosts();
-		for (DiscussionPost p : posts) {
-			String icon = p.isImagePost() ? "\uD83D\uDDBC" : "\uD83D\uDCC4";
-			ViewDiscussion.listView_Posts.getItems().add(
-				icon + " [" + p.getId() + "] " + p.getTitle() + " — " + p.getAuthor());
-		}
+	    ViewDiscussion.listView_Posts.getItems().clear();
+	    List<DiscussionPost> posts = theDatabase.getAllPosts();
+	    ViewDiscussion.set_reset(false);
+	    
+	    for (DiscussionPost p : posts) {
+	        String icon = p.isImagePost() ? "\uD83D\uDDBC" : "\uD83D\uDCC4";
+
+	        Label postLabel = new Label(icon + " [" + p.getId() + "] " + p.getTitle() + " — " + p.getAuthor());
+
+	        HBox postBox = new HBox(10);
+	        postBox.setPadding(new Insets(5));
+	        postBox.getChildren().add(postLabel);
+
+	        String[] tags = p.getTags().split(" ");
+	        for (String tag : tags) {
+	            Button tagButton = new Button("#" + tag);
+	            tagButton.setOnAction(event -> filter_by_tags(tag));
+	            postBox.getChildren().add(tagButton);
+	        }
+
+	        ViewDiscussion.listView_Posts.getItems().add(postBox);
+	    }
+	}
+
+	protected static void filter_by_tags(String tag) {
+	    ViewDiscussion.listView_Posts.getItems().clear();
+	    List<DiscussionPost> posts = theDatabase.getAllPosts();
+	    ViewDiscussion.set_reset(true);
+	    
+	    for (DiscussionPost p : posts) {
+	        String[] tags = p.getTags().split(" ");
+	        if (!Arrays.asList(tags).contains(tag)) {
+	            continue;
+	        }
+
+	        String icon = p.isImagePost() ? "\uD83D\uDDBC" : "\uD83D\uDCC4";
+	        Label postLabel = new Label(icon + " [" + p.getId() + "] " + p.getTitle() + " — " + p.getAuthor());
+
+	        HBox postBox = new HBox(10);
+	        postBox.setPadding(new Insets(5));
+	        postBox.getChildren().add(postLabel);
+
+	        for (String t : tags) {
+	            Button tagButton = new Button("#" + t);
+	            tagButton.setOnAction(event -> filter_by_tags(t));
+	            postBox.getChildren().add(tagButton);
+	        }
+	     
+	        ViewDiscussion.listView_Posts.getItems().add(postBox);
+	    }
 	}
 
 
@@ -228,6 +276,7 @@ public class ControllerDiscussion {
 	protected static void performCreatePost() {
 		String author = ViewDiscussion.text_Author.getText().trim();
 		String title  = ViewDiscussion.text_Title.getText().trim();
+		String tags = ViewDiscussion.text_tags.getText().trim();
 
 		String authorErr = ModelDiscussion.validateAuthor(author);
 		if (!authorErr.isEmpty()) { setError(authorErr); return; }
@@ -243,7 +292,7 @@ public class ControllerDiscussion {
 			try (FileInputStream fis = new FileInputStream(pendingImageFile)) {
 				javafx.scene.image.Image img = new javafx.scene.image.Image(fis);
 				int id = theDatabase.saveImagePost(
-					author, title, pendingImageFile.getName(), img, false);
+					author, title, pendingImageFile.getName(), img, false, tags);
 				if (id == -1) { setError("Error: Failed to save image post."); return; }
 			} catch (IOException e) {
 				setError("Error loading image: " + e.getMessage()); return;
@@ -251,13 +300,14 @@ public class ControllerDiscussion {
 			pendingImageFile = null;
 			ViewDiscussion.label_ImageFile.setText("No file selected.");
 
-		} else {
+		} 
+		else {
 			// Text post — validate body and insert into the posts table
 			String body    = ViewDiscussion.text_Body.getText().trim();
 			String bodyErr = ModelDiscussion.validateBody(body);
 			if (!bodyErr.isEmpty()) { setError(bodyErr); return; }
 
-			int id = theDatabase.saveTextPost(author, title, body, false);
+			int id = theDatabase.saveTextPost(author, title, body, false, tags);
 			if (id == -1) { setError("Error: Failed to save post."); return; }
 		}
 
