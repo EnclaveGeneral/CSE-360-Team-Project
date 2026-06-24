@@ -31,7 +31,7 @@ public class DiscussionPost {
 	private final Image   image;
 	private final boolean isPinned;
 	private final String  createdAt;
-
+	private final String tags;
 
 	/*******
 	 * <p> Method: DiscussionPost </p>
@@ -55,11 +55,13 @@ public class DiscussionPost {
 	 * @param isPinned       specifies whether this post is pinned (TRUE or FALSE)
 	 *
 	 * @param createdAt      specifies the timestamp string from H2
+	 * 
+	 * @param tags           specifies the tags for post
 	 *
 	 */
 	public DiscussionPost(int id, String author, String title, String body,
 	                      String postType, String imageFilename, Image image,
-	                      boolean isPinned, String createdAt) {
+	                      boolean isPinned, String createdAt, String tags) {
 		this.id            = id;
 		this.author        = author;
 		this.title         = title;
@@ -69,6 +71,7 @@ public class DiscussionPost {
 		this.image         = image;
 		this.isPinned      = isPinned;
 		this.createdAt     = createdAt;
+		this.tags = tags;
 	}
 
 
@@ -83,6 +86,9 @@ public class DiscussionPost {
 
 	/** @return the body text, or null for image posts */
 	public String  getBody()          { return body; }
+	
+	/** @return the tags */
+	public String  getTags()          { return tags; }
 
 	/** @return "text" or "image" */
 	public String  getPostType()      { return postType; }
