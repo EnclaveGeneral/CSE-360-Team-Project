@@ -1728,7 +1728,7 @@ public class Database {
 	 *
 	 */
 	public void updatePost(int postId, String author, String title, String body, String tags) {
-	    String sql = "UPDATE posts SET author = ?, title = ?, body = ?, tags = ?, id = ?";
+	    String sql = "UPDATE posts SET author = ?, title = ?, body = ?, tags = ? WHERE id = ?";
 	    try (PreparedStatement ps = connection.prepareStatement(sql)) {
 	    	ps.setString(1, author);
 	        ps.setString(2, title);
