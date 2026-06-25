@@ -1534,7 +1534,6 @@ public class Database {
 	            "post_type VARCHAR(10) DEFAULT 'text', " +
 	            "image_filename VARCHAR(255), " +
 	            "image_data BLOB, " +
-	            "is_pinned BOOL DEFAULT FALSE, " +
 	            "tags VARCHAR(255), " +
 	            "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)";
 
@@ -1543,7 +1542,6 @@ public class Database {
 	            "post_id INT NOT NULL, " +
 	            "author VARCHAR(255) NOT NULL, " +
 	            "body CLOB NOT NULL, " +
-	            "is_accepted BOOL DEFAULT FALSE, " +
 	            "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
 	            "FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE)";
 
@@ -1566,14 +1564,13 @@ public class Database {
 	 * @param tags      the tags for post
 	 * @return the generated post id, or -1 on failure
 	 */
-	public int saveTextPost(String author, String title, String body, boolean isPinned, String tags) {
-	    String sql = "INSERT INTO posts (author, title, body, post_type, is_pinned, tags) VALUES (?, ?, ?, 'text', ?, ?)";
+	public int saveTextPost(String author, String title, String body, String tags) {
+	    String sql = "INSERT INTO posts (author, title, body, post_type, tags) VALUES (?, ?, ?, 'text', ?)";
 	    try (PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 	        ps.setString(1, author);
 	        ps.setString(2, title);
 	        ps.setString(3, body);
-	        ps.setBoolean(4, isPinned);
-	        ps.setString(5, tags);
+	        ps.setString(4, tags);
 	        ps.executeUpdate();
 	        try (ResultSet keys = ps.getGeneratedKeys()) {
 	            if (keys.next()) return keys.getInt(1);
@@ -1597,8 +1594,8 @@ public class Database {
 	 * @param tags      the tags for post
 	 * @return the generated post id, or -1 on failure
 	 */
-	public int saveImagePost(String author, String title, String filename, javafx.scene.image.Image img, boolean isPinned, String tags) {
-	    String sql = "INSERT INTO posts (author, title, post_type, image_filename, image_data, is_pinned, tags) VALUES (?, ?, 'image', ?, ?, ?, ?)";
+	public int saveImagePost(String author, String title, String filename, javafx.scene.image.Image img, String tags) {
+	    String sql = "INSERT INTO posts (author, title, post_type, image_filename, image_data, tags) VALUES (?, ?, 'image', ?, ?, ?)";
 	    try (PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 	        ps.setString(1, author);
 	        ps.setString(2, title);
@@ -1609,8 +1606,7 @@ public class Database {
 	        ImageIO.write(bImg, "png", baos);
 	        byte[] bytes = baos.toByteArray();
 	        ps.setBinaryStream(4, new ByteArrayInputStream(bytes), bytes.length);
-	        ps.setBoolean(5, isPinned);
-	        ps.setString(6, tags);
+	        ps.setString(5, tags);
 	        
 	        ps.executeUpdate();
 	        try (ResultSet keys = ps.getGeneratedKeys()) {
@@ -1632,7 +1628,7 @@ public class Database {
 	 */
 	public java.util.List<entityClasses.DiscussionPost> getAllPosts() {
 	    java.util.List<entityClasses.DiscussionPost> list = new java.util.ArrayList<>();
-	    String sql = "SELECT id, author, title, body, post_type, image_filename, image_data, is_pinned, tags, created_at FROM posts ORDER BY created_at DESC";
+	    String sql = "SELECT id, author, title, body, post_type, image_filename, image_data, tags, created_at FROM posts ORDER BY created_at DESC";
 	    try (PreparedStatement ps = connection.prepareStatement(sql);
 	         ResultSet rs = ps.executeQuery()) {
 	        while (rs.next()) {
@@ -1643,7 +1639,6 @@ public class Database {
 	            String  type     = rs.getString("post_type");
 	            String  imgFile  = rs.getString("image_filename");
 	            Blob    blob     = rs.getBlob("image_data");
-	            boolean isPinned = rs.getBoolean("is_pinned");
 	            String tags = rs.getString("tags");
 	            String  created  = rs.getString("created_at");
 
@@ -1652,7 +1647,7 @@ public class Database {
 	                img = new javafx.scene.image.Image(blob.getBinaryStream());
 	            }
 	            list.add(new entityClasses.DiscussionPost(
-	                id, author, title, body, type, imgFile, img, isPinned, created, tags));
+	                id, author, title, body, type, imgFile, img, created, tags));
 	        }
 	    } catch (SQLException e) {
 	        e.printStackTrace();
@@ -1671,7 +1666,7 @@ public class Database {
 	 */
 	public java.util.List<entityClasses.DiscussionReply> getRepliesForPost(int postId) {
 	    java.util.List<entityClasses.DiscussionReply> list = new java.util.ArrayList<>();
-	    String sql = "SELECT id, post_id, author, body, is_accepted, created_at FROM replies WHERE post_id = ? ORDER BY created_at ASC";
+	    String sql = "SELECT id, post_id, author, body, created_at FROM replies WHERE post_id = ? ORDER BY created_at ASC";
 	    try (PreparedStatement ps = connection.prepareStatement(sql)) {
 	        ps.setInt(1, postId);
 	        try (ResultSet rs = ps.executeQuery()) {
@@ -1681,7 +1676,6 @@ public class Database {
 	                        rs.getInt("post_id"),
 	                        rs.getString("author"),
 	                        rs.getString("body"),
-	                        rs.getBoolean("is_accepted"),
 	                        rs.getString("created_at")));
 	            }
 	        }
@@ -1701,13 +1695,12 @@ public class Database {
 	 * @param body    the reply text
 	 * @return the generated reply id, or -1 on failure
 	 */
-	public int addReply(int postId, String author, String body, boolean isAccepted) {
-	    String sql = "INSERT INTO replies (post_id, author, body, is_accepted) VALUES (?, ?, ?, ?)";
+	public int addReply(int postId, String author, String body) {
+	    String sql = "INSERT INTO replies (post_id, author, body) VALUES (?, ?, ?)";
 	    try (PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 	        ps.setInt(1, postId);
 	        ps.setString(2, author);
 	        ps.setString(3, body);
-	        ps.setBoolean(4, isAccepted);
 	        ps.executeUpdate();
 	        try (ResultSet keys = ps.getGeneratedKeys()) {
 	            if (keys.next()) return keys.getInt(1);
@@ -1719,7 +1712,7 @@ public class Database {
 	}
 
 	/*******
-	 * <p> Method: updatePost(int postId, String title, String body, boolean isPinned) </p>
+	 * <p> Method: updatePost(int postId, String title, String body) </p>
 	 *
 	 * <p> Description: Updates the title, body, and isPinned flag of an existing post record
 	 * in the posts table whose id matches the specified postId. The author and post_type are
@@ -1733,17 +1726,15 @@ public class Database {
 	 * 
 	 * @param tags     is a String that specifies the space-separated tags for this post.
 	 *
-	 * @param isPinned is a boolean that specifies whether this post should be pinned.
-	 *
 	 */
-	public void updatePost(int postId, String title, String body, String tags, boolean isPinned) {
-	    String sql = "UPDATE posts SET title = ?, body = ?, is_pinned = ? WHERE id = ?";
+	public void updatePost(int postId, String author, String title, String body, String tags) {
+	    String sql = "UPDATE posts SET author = ?, title = ?, body = ?, tags = ?, id = ?";
 	    try (PreparedStatement ps = connection.prepareStatement(sql)) {
-	        ps.setString(1, title);
-	        ps.setString(2, body);
-	        ps.setBoolean(3, isPinned);
+	    	ps.setString(1, author);
+	        ps.setString(2, title);
+	        ps.setString(3, body);
 	        ps.setString(4, tags);
-	        ps.setInt(4, postId);
+	        ps.setInt(5, postId);
 	        ps.executeUpdate();
 	    } catch (SQLException e) {
 	        e.printStackTrace();
@@ -1764,12 +1755,11 @@ public class Database {
 	 * @param isAccepted is a boolean that specifies whether this reply is the accepted answer.
 	 *
 	 */
-	public void updateReply(int replyId, String body, boolean isAccepted) {
-	    String sql = "UPDATE replies SET body = ?, is_accepted = ? WHERE id = ?";
+	public void updateReply(int replyId, String body) {
+	    String sql = "UPDATE replies SET body = ? WHERE id = ?";
 	    try (PreparedStatement ps = connection.prepareStatement(sql)) {
 	        ps.setString(1, body);
-	        ps.setBoolean(2, isAccepted);
-	        ps.setInt(3, replyId);
+	        ps.setInt(2, replyId);
 	        ps.executeUpdate();
 	    } catch (SQLException e) {
 	        e.printStackTrace();

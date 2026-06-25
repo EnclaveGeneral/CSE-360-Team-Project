@@ -23,7 +23,6 @@ public class DiscussionReply {
 	private final int     postId;
 	private final String  author;
 	private final String  body;
-	private final boolean isAccepted;
 	private final String  createdAt;
 
 
@@ -45,13 +44,11 @@ public class DiscussionReply {
 	 * @param createdAt  specifies the timestamp string from H2
 	 *
 	 */
-	public DiscussionReply(int id, int postId, String author, String body,
-	                       boolean isAccepted, String createdAt) {
+	public DiscussionReply(int id, int postId, String author, String body, String createdAt) {
 		this.id         = id;
 		this.postId     = postId;
 		this.author     = author;
 		this.body       = body;
-		this.isAccepted = isAccepted;
 		this.createdAt  = createdAt;
 	}
 
@@ -67,9 +64,6 @@ public class DiscussionReply {
 
 	/** @return the reply body text */
 	public String  getBody()       { return body; }
-
-	/** @return true if this reply is the accepted answer */
-	public boolean getIsAccepted() { return isAccepted; }
 
 	/** @return H2 timestamp string */
 	public String  getCreatedAt()  { return createdAt; }
