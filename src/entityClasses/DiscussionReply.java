@@ -24,6 +24,7 @@ public class DiscussionReply {
 	private final String  author;
 	private final String  body;
 	private final String  createdAt;
+	private boolean 	  read;
 
 
 	/*******
@@ -44,12 +45,13 @@ public class DiscussionReply {
 	 * @param createdAt  specifies the timestamp string from H2
 	 *
 	 */
-	public DiscussionReply(int id, int postId, String author, String body, String createdAt) {
+	public DiscussionReply(int id, int postId, String author, String body, String createdAt, boolean read) {
 		this.id         = id;
 		this.postId     = postId;
 		this.author     = author;
 		this.body       = body;
 		this.createdAt  = createdAt;
+		this.read 		= read;
 	}
 
 
@@ -64,6 +66,13 @@ public class DiscussionReply {
 
 	/** @return the reply body text */
 	public String  getBody()       { return body; }
+	
+	/** @return the boolean isRead */
+	public boolean  getRead()       { return read; }
+	
+	/** @return the boolean isRead */
+	public void  setRead(boolean input)       { read = input; }
+	
 
 	/** @return H2 timestamp string */
 	public String  getCreatedAt()  { return createdAt; }
