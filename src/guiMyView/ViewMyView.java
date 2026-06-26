@@ -1,34 +1,34 @@
-package guiDiscussion;
+package guiMyView;
 
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
-import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import applicationMain.FoundationsMain;
 
+
 /*******
- * <p> Title: ViewDiscussion Class </p>
+ * <p> Title: ViewMyView Class </p>
  *
- * <p> Description: This class implements the View component of the MVC design pattern for the
- * unified Discussion Board page. It provides the graphical user interface for full CRUD on
- * text posts, create and delete for image posts, and full CRUD on text replies. This class
- * follows the Singleton design pattern so that only one instance of the page is ever
- * created. </p>
+ * <p> Description: This class implements the View component of the MVC design pattern for
+ * the unified MyView Board page. It handles all user interactions from MyView,
+ * validates input via ModelMyView, and delegates all database operations to Database.
+ * The purpose of this gui is to allow users to interact strictly with a filtered view of their 
+ * own posts and replies to those posts. Users will be able to filter responses from specific users, specific keywords,
+ * and between all messages vs only unread messages. </p>
  *
  * <p> Copyright: Lynn Robert Carter © 2025 </p>
  *
- * @author Weiye (Richard) Zhang, Joshua Sprague
+ * @author Omid Kadkhodaei
  *
- * @version 1.00	2026-06-15	Initial HW2 text-only discussion board
- * @version 2.00	2026-06-22	Added image post section
- * @version 3.00	2026-06-23	Unified board; text/image toggle; full CRUD for text posts/replies
+ * @version 1.00	2026-06-25	For the express purpose of Team project 2.
+
  */
-public class ViewDiscussion {
+public class ViewMyView {
 
 	/*-*******************************************************************************************
 
@@ -36,8 +36,8 @@ public class ViewDiscussion {
 
 	**********************************************************************************************/
 
-	private static ViewDiscussion theView = null;
-	private static Scene theDiscussionScene;
+	private static ViewMyView theView = null;
+	private static Scene theMyView;
 	private static Pane  theRootPane;
 
 	static Stage              theStage;
@@ -47,6 +47,11 @@ public class ViewDiscussion {
 
 	private static double width  = FoundationsMain.WINDOW_WIDTH;
 	private static double height = FoundationsMain.WINDOW_HEIGHT;
+	
+	private static int numPosts = 0;
+	private static int numReplies = 0;
+	private static int readReplies = 0;
+	private static int newReplies = 0;
 
 
 	/*-*******************************************************************************************
@@ -55,9 +60,8 @@ public class ViewDiscussion {
 
 	**********************************************************************************************/
 
-	static Label  label_PageTitle     = new Label("Discussion Board");
+	static Label  label_PageTitle     = new Label("Welcome to MyView");
 	static Label  label_UserDetails   = new Label();
-	static Button button_AccountUpdate = new Button("Account Update");
 	static Line   line_Sep1 = new Line(20, 70, width - 20, 70);
 
 
@@ -68,37 +72,20 @@ public class ViewDiscussion {
 	**********************************************************************************************/
 
 	static Label label_PostSection = new Label("Posts");
-	static Button button_myView = new Button("Go to MyView");
 
 	// Shared author field used by both posts and replies
-	static Label     label_Author = new Label("Author:");
-	static TextField text_Author  = new TextField();
-
-	static Label     label_Title = new Label("Title:");
-	static TextField text_Title  = new TextField();
+	static Label     label_numPosts = new Label("Number of Posts: " + numPosts);
 	
-	static Label     label_Tags = new Label("Tags:");
-	static TextField text_tags  = new TextField();
 
-	// Toggle: TEXT vs IMAGE
+	// Toggle: USER vs KEYWORD
 	static ToggleGroup toggle_PostType = new ToggleGroup();
-	static RadioButton radio_Text      = new RadioButton("Text");
-	static RadioButton radio_Image     = new RadioButton("Image");
+	static RadioButton radio_User      = new RadioButton("User");
+	static RadioButton radio_Keyword     = new RadioButton("Keyword");
 
 	// Text body — shown when TEXT is selected
 	static Label     label_Body = new Label("Body:");
-	static TextField text_Body  = new TextField();
+	static TextField text_Filter  = new TextField();
 
-	// Image file picker — shown when IMAGE is selected
-	static Label  label_ImageFile  = new Label("No file selected.");
-	static Button button_PickImage = new Button("Browse\u2026");
-
-	// Post CRUD buttons
-	// Note: Update is only enabled for text posts; image posts support create and delete only
-	static Button button_CreatePost = new Button("Create Post");
-	static Button button_reset_filter = new Button("reset filter");
-	static Button button_UpdatePost = new Button("Update Post");
-	static Button button_DeletePost = new Button("Delete Post");
 
 	static Line line_Sep2 = new Line(20, 358, width - 20, 358);
 
@@ -118,19 +105,23 @@ public class ViewDiscussion {
 
 	**********************************************************************************************/
 
-	static Label label_ReplySection = new Label("Replies");
+	static Label 	 label_ReplySection = new Label("Replies");
+	static Label     label_numReplies = new Label("Number of replies: " + numReplies);
+	static Label 	 label_ReadVsUndreadReplies = new Label("Read Replies: " + readReplies + " New Replies: " + newReplies);
+	static Label 	 label_Filter = new Label("Filter by:");
 
-	static Label     label_ReplyBody = new Label("Body:");
-	static TextField text_ReplyBody  = new TextField();
+//	static Label     label_ReplyBody = new Label("Body:");
+//	static TextField text_ReplyBody  = new TextField();
+	
 
-	// Reply CRUD buttons — replies are always text
-	static Button button_CreateReply = new Button("Create Reply");
-	static Button button_UpdateReply = new Button("Update Reply");
-	static Button button_DeleteReply = new Button("Delete Reply");
+//	// Reply CRUD buttons — replies are always text
+//	static Button button_CreateReply = new Button("Create Reply");
+//	static Button button_UpdateReply = new Button("Update Reply");
+//	static Button button_DeleteReply = new Button("Delete Reply");
 
 	static ListView<String> listView_Replies = new ListView<>();
 
-	static Line line_Sep3 = new Line(20, 615, width - 20, 615);
+	static Line line_Sep3 = new Line(20, 655, width - 20, 655);
 
 
 	/*-*******************************************************************************************
@@ -139,8 +130,11 @@ public class ViewDiscussion {
 
 	**********************************************************************************************/
 
-	static Label  label_ErrorMessage = new Label("");
+//	static Label  label_ErrorMessage = new Label("");
 	static Button button_Back        = new Button("Back");
+	static Button button_ShowAll        = new Button("Show all");
+	static Button button_UnreadOnly        = new Button("Show unread");
+	static Button button_Search        = new Button("Search");
 
 
 	/*-*******************************************************************************************
@@ -160,20 +154,20 @@ public class ViewDiscussion {
 	 * @param user is the currently logged-in User whose username is displayed in the header.
 	 *
 	 */
-	public static void displayDiscussion(Stage ps, entityClasses.User user) {
+	public static void displayMyView(Stage ps, entityClasses.User user) {
 		theStage = ps;
 		theUser  = user;
 
-		if (theView == null) theView = new ViewDiscussion();
+		if (theView == null) theView = new ViewMyView();
 
 		label_UserDetails.setText("User: " + theUser.getUserName());
-		label_ErrorMessage.setText("");
+//		label_ErrorMessage.setText("");
 
-		theStage.setTitle("CSE 360: Discussion Board");
-		theStage.setScene(theDiscussionScene);
+		theStage.setTitle("CSE 360: MyView");
+		theStage.setScene(theMyView);
 		theStage.show();
 
-		ControllerDiscussion.refreshPostList();
+		ControllerMyView.refreshPostList();
 	}
 
 
@@ -192,154 +186,100 @@ public class ViewDiscussion {
 	 * Subsequent calls to displayDiscussion() reuse the already-initialized scene. </p>
 	 *
 	 */
-	private ViewDiscussion() {
+	private ViewMyView() {
 
 		theRootPane        = new Pane();
-		theDiscussionScene = new Scene(theRootPane, width, height);
-		theDiscussionScene.getStylesheets().add(
-			ViewDiscussion.class.getResource("/dark-theme.css").toExternalForm());
+		theMyView = new Scene(theRootPane, width, height);
+		theMyView.getStylesheets().add(
+			ViewMyView.class.getResource("/dark-theme.css").toExternalForm());
 
 		// ── Header (y 8–70) ──────────────────────────────────────────────────────
 		setupLabel(label_PageTitle,     "Arial", 22, width, Pos.CENTER,        0,  10);
-		setupLabel(label_UserDetails,   "Arial", 13, 500,   Pos.BASELINE_LEFT, 20, 44);
-		setupButton(button_AccountUpdate, "Dialog", 12, 145, Pos.CENTER, 635, 37);
-		button_AccountUpdate.setOnAction((_) ->
-			guiUserUpdate.ViewUserUpdate.displayUserUpdate(theStage, theUser));
+		setupLabel(label_UserDetails,   "Arial", 18, 500,   Pos.BASELINE_LEFT, 20, 44);
 		
-		/*
-		 * Set up by Soya - myView
-		 */
-		setupButton(button_myView, "Dialog", 12, 145, Pos.CENTER, 465, 37);
-		button_myView.setOnAction((_) -> 
-		{ guiMyView.ViewMyView.displayMyView(theStage, theUser); });
 
 		// ── Post input (y 80–180) ─────────────────────────────────────────────────
 		setupLabel(label_PostSection, "Arial", 13, 100, Pos.BASELINE_LEFT, 20, 82);
 
 		// Author and Title on the same row
-		setupLabel(label_Author, "Arial", 12, 50,  Pos.BASELINE_LEFT, 20,  108);
-		setupText (text_Author,  "Arial", 12, 170, Pos.BASELINE_LEFT, 72,  105);
-		setupLabel(label_Title,  "Arial", 12, 30,  Pos.BASELINE_LEFT, 255, 108);
-		setupText (text_Title,   "Arial", 12, 350, Pos.BASELINE_LEFT, 290, 105);
-		setupLabel(label_Tags,  "Arial", 12, 30,  Pos.BASELINE_LEFT, 255, 133);
-		setupText (text_tags,   "Arial", 12, 350, Pos.BASELINE_LEFT, 290, 133);
+		setupLabel(label_numPosts, "Arial", 13, 50,  Pos.BASELINE_LEFT, 20,  108);
 
-		// TEXT / IMAGE toggle
-		radio_Text.setToggleGroup(toggle_PostType);
-		radio_Image.setToggleGroup(toggle_PostType);
-		radio_Text.setSelected(true);
-		radio_Text.setLayoutX(20);  radio_Text.setLayoutY(133);
-		radio_Image.setLayoutX(82); radio_Image.setLayoutY(133);
 
 		// Text body (default visible)
-		setupLabel(label_Body, "Arial", 12, 30,  Pos.BASELINE_LEFT, 20,  158);
-		setupText (text_Body,  "Arial", 12, 605, Pos.BASELINE_LEFT, 55,  155);
+		setupLabel(label_Body, "Arial", 13, 30,  Pos.BASELINE_LEFT, 20,  158);
+		setupText (text_Filter,  "Arial", 13, 275, Pos.BASELINE_LEFT, 500,  426);
 
-		// Image picker (default hidden)
-		label_ImageFile.setFont(Font.font("Arial", 12));
-		label_ImageFile.setLayoutX(55);
-		label_ImageFile.setLayoutY(158);
-		label_ImageFile.setMinWidth(400);
-		setupButton(button_PickImage, "Dialog", 11, 85, Pos.CENTER, 668, 154);
-		button_PickImage.setOnAction((_) -> ControllerDiscussion.performPickImage(theStage));
-		label_ImageFile.setVisible(false);
-		button_PickImage.setVisible(false);
-
-		// Swap visible controls when toggle changes
-		toggle_PostType.selectedToggleProperty().addListener((obs, oldT, newT) -> {
-			boolean img = (newT == radio_Image);
-			label_Body.setVisible(!img);
-			text_Body.setVisible(!img);
-			label_ImageFile.setVisible(img);
-			button_PickImage.setVisible(img);
-			// Update Post disabled for image posts — no meaningful field to edit
-			button_UpdatePost.setDisable(img);
-		});
-
-		// Post CRUD buttons
-		setupButton(button_CreatePost, "Dialog", 12, 130, Pos.CENTER, 20,  183);
-		button_CreatePost.setOnAction((_) -> ControllerDiscussion.performCreatePost());
-		
-		setupButton(button_reset_filter, "Dialog", 12, 130, Pos.CENTER, 450,  183);
-		button_reset_filter.setOnAction((_) -> ControllerDiscussion.refreshPostList());
-		
-		setupButton(button_UpdatePost, "Dialog", 12, 130, Pos.CENTER, 160, 183);
-		button_UpdatePost.setOnAction((_) -> ControllerDiscussion.performUpdatePost());
-
-		setupButton(button_DeletePost, "Dialog", 12, 130, Pos.CENTER, 300, 183);
-		button_DeletePost.setOnAction((_) -> ControllerDiscussion.performDeletePost());
 
 		// ── Post list (y 215–358) ─────────────────────────────────────────────────
 		listView_Posts.setLayoutX(20);
-		listView_Posts.setLayoutY(215);
+		listView_Posts.setLayoutY(130);
 		listView_Posts.setPrefWidth(760);
-		listView_Posts.setPrefHeight(135);
-		listView_Posts.setOnMouseClicked((_) -> ControllerDiscussion.selectPost());
+		listView_Posts.setPrefHeight(220);
+		listView_Posts.setOnMouseClicked((_) -> ControllerMyView.selectPost());
 
 		// ── Reply input (y 370–470) ───────────────────────────────────────────────
 		setupLabel(label_ReplySection, "Arial", 13, 100, Pos.BASELINE_LEFT, 20, 372);
+		setupLabel(label_numReplies, "Arial", 13, 30,  Pos.BASELINE_LEFT, 20,  398);
+		setupLabel (label_ReadVsUndreadReplies,  "Arial", 13, 605, Pos.BASELINE_LEFT, 20,  426);
+		setupLabel(label_Filter, "Arial", 13, 100, Pos.BASELINE_LEFT, 500, 372);
+		
+		// USER / KEYWORD toggle
+		radio_User.setToggleGroup(toggle_PostType);
+		radio_Keyword.setToggleGroup(toggle_PostType);
+		radio_User.setSelected(true);
+		radio_User.setLayoutX(500);  radio_User.setLayoutY(398);
+		radio_Keyword.setLayoutX(562); radio_Keyword.setLayoutY(398);
 
-		setupLabel(label_ReplyBody, "Arial", 12, 30,  Pos.BASELINE_LEFT, 20,  398);
-		setupText (text_ReplyBody,  "Arial", 12, 605, Pos.BASELINE_LEFT, 55,  395);
-
-		// Reply CRUD buttons
-		setupButton(button_CreateReply, "Dialog", 12, 130, Pos.CENTER, 20,  425);
-		button_CreateReply.setOnAction((_) -> ControllerDiscussion.performCreateReply());
-
-		setupButton(button_UpdateReply, "Dialog", 12, 130, Pos.CENTER, 160, 425);
-		button_UpdateReply.setOnAction((_) -> ControllerDiscussion.performUpdateReply());
-
-		setupButton(button_DeleteReply, "Dialog", 12, 130, Pos.CENTER, 300, 425);
-		button_DeleteReply.setOnAction((_) -> ControllerDiscussion.performDeleteReply());
 
 		// ── Reply list (y 458–615) ────────────────────────────────────────────────
 		listView_Replies.setLayoutX(20);
 		listView_Replies.setLayoutY(458);
 		listView_Replies.setPrefWidth(760);
 		listView_Replies.setPrefHeight(150);
-		listView_Replies.setOnMouseClicked((_) -> ControllerDiscussion.selectReply());
+		listView_Replies.setOnMouseClicked((_) -> ControllerMyView.selectReply());
 
 		// ── Status + navigation (y 623–710) ──────────────────────────────────────
-		label_ErrorMessage.setTextFill(Color.web("#ff6b6b"));
-		setupLabel(label_ErrorMessage, "Arial", 12, width - 160, Pos.BASELINE_LEFT, 20, 625);
-		setupButton(button_Back, "Dialog", 12, 110, Pos.CENTER, 660, 620);
-		button_Back.setOnAction((_) -> ControllerDiscussion.performBack());
+		setupButton(button_Back, "Dialog", 13, 110, Pos.CENTER, 660, 665);
+		button_Back.setOnAction((_) -> guiMyView.ControllerMyView.doNothing());
+		
+		setupButton(button_ShowAll, "Dialog", 13, 110, Pos.CENTER, 20, 620);
+		button_Back.setOnAction((_) -> ControllerMyView.selectPost());
+		
+		setupButton(button_UnreadOnly, "Dialog", 13, 110, Pos.CENTER, 150, 620);
+		button_Back.setOnAction((_) -> guiMyView.ControllerMyView.doNothing());
+		
+		setupButton(button_Search, "Dialog", 13, 110, Pos.CENTER, 660, 393);
+		button_Back.setOnAction((_) -> guiMyView.ControllerMyView.doNothing());
 
 		// Add all widgets to the pane
 		theRootPane.getChildren().addAll(
-			label_PageTitle, label_UserDetails, button_AccountUpdate, line_Sep1,button_myView, 
-			label_PostSection,
-			label_Author, text_Author,
-			label_Title,  text_Title,
-			radio_Text, radio_Image,
-			label_Body, text_Body,
-			label_Tags, text_tags,
-			label_ImageFile, button_PickImage,
-			button_CreatePost, button_UpdatePost, button_DeletePost,
+			label_PageTitle, label_UserDetails, line_Sep1,
+			label_PostSection, label_numPosts, label_numReplies,
+			radio_User, radio_Keyword,
+			text_Filter,
 			listView_Posts,
 			line_Sep2,
-			label_ReplySection,
-			label_ReplyBody, text_ReplyBody,
-			button_CreateReply, button_UpdateReply, button_DeleteReply,
-			listView_Replies,
+			label_ReplySection, label_ReadVsUndreadReplies, listView_Replies,
+			label_Filter,
 			line_Sep3,
-			label_ErrorMessage, button_Back
+			button_Back,
+			button_ShowAll, button_UnreadOnly, button_Search
 		);
 
 		// Ensure discussion tables exist
 		FoundationsMain.database.createDiscussionTables();
 	}
 	
-	public static void set_reset(boolean c){
-		reset = c;
-		
-		if(reset) {
-			theRootPane.getChildren().add(button_reset_filter);
-		}
-		else {
-			theRootPane.getChildren().remove(button_reset_filter);
-		}
-	}
+//	public static void set_reset(boolean c){
+//		reset = c;
+//		
+//		if(reset) {
+//			theRootPane.getChildren().add(button_reset_filter);
+//		}
+//		else {
+//			theRootPane.getChildren().remove(button_reset_filter);
+//		}
+//	}
 
 
 	/*-*******************************************************************************************

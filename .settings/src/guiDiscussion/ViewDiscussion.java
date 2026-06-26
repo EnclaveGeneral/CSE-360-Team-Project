@@ -59,7 +59,12 @@ public class ViewDiscussion {
 	static Label  label_UserDetails   = new Label();
 	static Button button_AccountUpdate = new Button("Account Update");
 	static Line   line_Sep1 = new Line(20, 70, width - 20, 70);
+	
+	/*
+	 * Changes by Soya - Account update.
+	 */
 
+	static Button button_myView = new Button("Go to MyView");
 
 	/*-*******************************************************************************************
 
@@ -68,7 +73,6 @@ public class ViewDiscussion {
 	**********************************************************************************************/
 
 	static Label label_PostSection = new Label("Posts");
-	static Button button_myView = new Button("Go to MyView");
 
 	// Shared author field used by both posts and replies
 	static Label     label_Author = new Label("Author:");
@@ -173,7 +177,7 @@ public class ViewDiscussion {
 		theStage.setScene(theDiscussionScene);
 		theStage.show();
 
-		ControllerDiscussion.refreshPostList();
+		ControllerMyView.refreshPostList();
 	}
 
 
@@ -210,8 +214,8 @@ public class ViewDiscussion {
 		 * Set up by Soya - myView
 		 */
 		setupButton(button_myView, "Dialog", 12, 145, Pos.CENTER, 465, 37);
-		button_myView.setOnAction((_) -> 
-		{ guiMyView.ViewMyView.displayMyView(theStage, theUser); });
+		button_AccountUpdate.setOnAction((_) ->
+			guiUserUpdate.ViewUserUpdate.displayUserUpdate(theStage, theUser));
 
 		// ── Post input (y 80–180) ─────────────────────────────────────────────────
 		setupLabel(label_PostSection, "Arial", 13, 100, Pos.BASELINE_LEFT, 20, 82);
@@ -241,7 +245,7 @@ public class ViewDiscussion {
 		label_ImageFile.setLayoutY(158);
 		label_ImageFile.setMinWidth(400);
 		setupButton(button_PickImage, "Dialog", 11, 85, Pos.CENTER, 668, 154);
-		button_PickImage.setOnAction((_) -> ControllerDiscussion.performPickImage(theStage));
+		button_PickImage.setOnAction((_) -> ControllerMyView.performPickImage(theStage));
 		label_ImageFile.setVisible(false);
 		button_PickImage.setVisible(false);
 
@@ -258,23 +262,23 @@ public class ViewDiscussion {
 
 		// Post CRUD buttons
 		setupButton(button_CreatePost, "Dialog", 12, 130, Pos.CENTER, 20,  183);
-		button_CreatePost.setOnAction((_) -> ControllerDiscussion.performCreatePost());
+		button_CreatePost.setOnAction((_) -> ControllerMyView.performCreatePost());
 		
 		setupButton(button_reset_filter, "Dialog", 12, 130, Pos.CENTER, 450,  183);
-		button_reset_filter.setOnAction((_) -> ControllerDiscussion.refreshPostList());
+		button_reset_filter.setOnAction((_) -> ControllerMyView.refreshPostList());
 		
 		setupButton(button_UpdatePost, "Dialog", 12, 130, Pos.CENTER, 160, 183);
-		button_UpdatePost.setOnAction((_) -> ControllerDiscussion.performUpdatePost());
+		button_UpdatePost.setOnAction((_) -> ControllerMyView.performUpdatePost());
 
 		setupButton(button_DeletePost, "Dialog", 12, 130, Pos.CENTER, 300, 183);
-		button_DeletePost.setOnAction((_) -> ControllerDiscussion.performDeletePost());
+		button_DeletePost.setOnAction((_) -> ControllerMyView.performDeletePost());
 
 		// ── Post list (y 215–358) ─────────────────────────────────────────────────
 		listView_Posts.setLayoutX(20);
 		listView_Posts.setLayoutY(215);
 		listView_Posts.setPrefWidth(760);
 		listView_Posts.setPrefHeight(135);
-		listView_Posts.setOnMouseClicked((_) -> ControllerDiscussion.selectPost());
+		listView_Posts.setOnMouseClicked((_) -> ControllerMyView.selectPost());
 
 		// ── Reply input (y 370–470) ───────────────────────────────────────────────
 		setupLabel(label_ReplySection, "Arial", 13, 100, Pos.BASELINE_LEFT, 20, 372);
@@ -284,30 +288,30 @@ public class ViewDiscussion {
 
 		// Reply CRUD buttons
 		setupButton(button_CreateReply, "Dialog", 12, 130, Pos.CENTER, 20,  425);
-		button_CreateReply.setOnAction((_) -> ControllerDiscussion.performCreateReply());
+		button_CreateReply.setOnAction((_) -> ControllerMyView.performCreateReply());
 
 		setupButton(button_UpdateReply, "Dialog", 12, 130, Pos.CENTER, 160, 425);
-		button_UpdateReply.setOnAction((_) -> ControllerDiscussion.performUpdateReply());
+		button_UpdateReply.setOnAction((_) -> ControllerMyView.performUpdateReply());
 
 		setupButton(button_DeleteReply, "Dialog", 12, 130, Pos.CENTER, 300, 425);
-		button_DeleteReply.setOnAction((_) -> ControllerDiscussion.performDeleteReply());
+		button_DeleteReply.setOnAction((_) -> ControllerMyView.performDeleteReply());
 
 		// ── Reply list (y 458–615) ────────────────────────────────────────────────
 		listView_Replies.setLayoutX(20);
 		listView_Replies.setLayoutY(458);
 		listView_Replies.setPrefWidth(760);
 		listView_Replies.setPrefHeight(150);
-		listView_Replies.setOnMouseClicked((_) -> ControllerDiscussion.selectReply());
+		listView_Replies.setOnMouseClicked((_) -> ControllerMyView.selectReply());
 
 		// ── Status + navigation (y 623–710) ──────────────────────────────────────
 		label_ErrorMessage.setTextFill(Color.web("#ff6b6b"));
 		setupLabel(label_ErrorMessage, "Arial", 12, width - 160, Pos.BASELINE_LEFT, 20, 625);
 		setupButton(button_Back, "Dialog", 12, 110, Pos.CENTER, 660, 620);
-		button_Back.setOnAction((_) -> ControllerDiscussion.performBack());
+		button_Back.setOnAction((_) -> ControllerMyView.performBack());
 
 		// Add all widgets to the pane
 		theRootPane.getChildren().addAll(
-			label_PageTitle, label_UserDetails, button_AccountUpdate, line_Sep1,button_myView, 
+			label_PageTitle, label_UserDetails, button_AccountUpdate, line_Sep1,
 			label_PostSection,
 			label_Author, text_Author,
 			label_Title,  text_Title,
@@ -320,7 +324,7 @@ public class ViewDiscussion {
 			line_Sep2,
 			label_ReplySection,
 			label_ReplyBody, text_ReplyBody,
-			button_CreateReply, button_UpdateReply, button_DeleteReply,
+			button_CreateReply, button_UpdateReply, button_DeleteReply, button_myView,
 			listView_Replies,
 			line_Sep3,
 			label_ErrorMessage, button_Back
