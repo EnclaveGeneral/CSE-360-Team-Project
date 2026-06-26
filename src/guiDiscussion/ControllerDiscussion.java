@@ -229,6 +229,7 @@ public class ControllerDiscussion {
 		if (index >= replies.size()) return;
 
 		DiscussionReply r = replies.get(index);
+		r.setRead(true);
 		selectedReplyId = r.getId();
 
 		// Populate the reply body field so the user can edit it

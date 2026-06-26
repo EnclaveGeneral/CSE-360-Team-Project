@@ -100,7 +100,7 @@ public class Database {
 			connection = DriverManager.getConnection(DB_URL, USER, PASS);
 			statement = connection.createStatement(); 
 			// You can use this command to clear the database and restart from fresh.
-			statement.execute("DROP ALL OBJECTS");
+//			statement.execute("DROP ALL OBJECTS");
 
 			createTables();  // Create the necessary tables if they don't exist
 		} catch (ClassNotFoundException e) {
@@ -1543,6 +1543,7 @@ public class Database {
 	            "author VARCHAR(255) NOT NULL, " +
 	            "body CLOB NOT NULL, " +
 	            "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
+	            "read BOOLEAN DEFAULT FALSE, " +
 	            "FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE)";
 
 	    try (Statement stmt = connection.createStatement()) {
@@ -1666,7 +1667,7 @@ public class Database {
 	 */
 	public java.util.List<entityClasses.DiscussionReply> getRepliesForPost(int postId) {
 	    java.util.List<entityClasses.DiscussionReply> list = new java.util.ArrayList<>();
-	    String sql = "SELECT id, post_id, author, body, created_at FROM replies WHERE post_id = ? ORDER BY created_at ASC";
+	    String sql = "SELECT id, post_id, author, body, created_at, read FROM replies WHERE post_id = ? ORDER BY created_at ASC";
 	    try (PreparedStatement ps = connection.prepareStatement(sql)) {
 	        ps.setInt(1, postId);
 	        try (ResultSet rs = ps.executeQuery()) {
@@ -1676,7 +1677,8 @@ public class Database {
 	                        rs.getInt("post_id"),
 	                        rs.getString("author"),
 	                        rs.getString("body"),
-	                        rs.getString("created_at")));
+	                        rs.getString("created_at"),
+	                        rs.getBoolean("read")));
 	            }
 	        }
 	    } catch (SQLException e) {
