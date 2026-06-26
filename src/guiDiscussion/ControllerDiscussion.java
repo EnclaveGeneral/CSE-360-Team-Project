@@ -297,7 +297,7 @@ public class ControllerDiscussion {
 			try (FileInputStream fis = new FileInputStream(pendingImageFile)) {
 				javafx.scene.image.Image img = new javafx.scene.image.Image(fis);
 				int id = theDatabase.saveImagePost(
-					author, title, pendingImageFile.getName(), img, false, tags);
+					author, title, pendingImageFile.getName(), img, tags);
 				if (id == -1) { setError("Error: Failed to save image post."); return; }
 			} catch (IOException e) {
 				setError("Error loading image: " + e.getMessage()); return;
@@ -312,7 +312,7 @@ public class ControllerDiscussion {
 			String bodyErr = ModelDiscussion.validateBody(body);
 			if (!bodyErr.isEmpty()) { setError(bodyErr); return; }
 
-			int id = theDatabase.saveTextPost(author, title, body, false, tags);
+			int id = theDatabase.saveTextPost(author, title, body, tags);
 			if (id == -1) { setError("Error: Failed to save post."); return; }
 		}
 
@@ -353,7 +353,7 @@ public class ControllerDiscussion {
 		if (!bodyErr.isEmpty()) { setError(bodyErr); return; }
 		
 		String tags = ViewDiscussion.text_tags.getText().trim();
-		theDatabase.updatePost(selectedPostId, title, body, tags, false);
+		theDatabase.updatePost(selectedPostId, author, title, body, tags);
 		clearPostFields();
 		setSuccess("Post updated successfully!");
 		refreshPostList();
@@ -423,7 +423,7 @@ public class ControllerDiscussion {
 		String bodyErr = ModelDiscussion.validateBody(body);
 		if (!bodyErr.isEmpty()) { setError(bodyErr); return; }
 
-		int id = theDatabase.addReply(selectedPostId, author, body, false);
+		int id = theDatabase.addReply(selectedPostId, author, body);
 		if (id == -1) { setError("Error: Failed to save reply."); return; }
 
 		ViewDiscussion.text_ReplyBody.setText("");
@@ -447,7 +447,7 @@ public class ControllerDiscussion {
 		String bodyErr = ModelDiscussion.validateBody(body);
 		if (!bodyErr.isEmpty()) { setError(bodyErr); return; }
 
-		theDatabase.updateReply(selectedReplyId, body, false);
+		theDatabase.updateReply(selectedReplyId, body);
 		ViewDiscussion.text_ReplyBody.setText("");
 		setSuccess("Reply updated successfully!");
 		refreshReplyList(selectedPostId);
@@ -513,7 +513,7 @@ public class ControllerDiscussion {
 	 *
 	 */
 	private static void setError(String message) {
-		ViewDiscussion.label_ErrorMessage.setText("Error: " + message);
+		ViewDiscussion.label_ErrorMessage.setText(message);
 	}
 
 
