@@ -29,7 +29,6 @@ public class DiscussionPost {
 	private final String  postType;       // "text" | "image"
 	private final String  imageFilename;
 	private final Image   image;
-	private final boolean isPinned;
 	private final String  createdAt;
 	private final String tags;
 
@@ -61,7 +60,7 @@ public class DiscussionPost {
 	 */
 	public DiscussionPost(int id, String author, String title, String body,
 	                      String postType, String imageFilename, Image image,
-	                      boolean isPinned, String createdAt, String tags) {
+	                      String createdAt, String tags) {
 		this.id            = id;
 		this.author        = author;
 		this.title         = title;
@@ -69,7 +68,6 @@ public class DiscussionPost {
 		this.postType      = postType;
 		this.imageFilename = imageFilename;
 		this.image         = image;
-		this.isPinned      = isPinned;
 		this.createdAt     = createdAt;
 		this.tags = tags;
 	}
@@ -98,9 +96,6 @@ public class DiscussionPost {
 
 	/** @return the decoded JavaFX Image, or null for text posts */
 	public Image   getImage()         { return image; }
-
-	/** @return true if this post is pinned */
-	public boolean getIsPinned()      { return isPinned; }
 
 	/** @return H2 timestamp string */
 	public String  getCreatedAt()     { return createdAt; }
