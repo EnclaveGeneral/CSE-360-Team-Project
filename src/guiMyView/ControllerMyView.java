@@ -2,6 +2,7 @@ package guiMyView;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -153,23 +154,33 @@ public class ControllerMyView {
 	 *
 	 */
 	protected static void refreshReplyList(int postId) {
+		ViewMyView.currentPostId = postId;
+		ViewMyView.numReplies = 0;
+		ViewMyView.readReplies = 0;
 		ViewMyView.listView_Replies.getItems().clear();
 		List<DiscussionReply> replies = theDatabase.getRepliesForPost(postId);
 		for (DiscussionReply r : replies) {
 			ViewMyView.listView_Replies.getItems().add(
 				"[" + r.getId() + "] " + r.getBody() + " \u2014 " + r.getAuthor());
+			if (r.getRead()) {ViewMyView.readReplies++;}
+			ViewMyView.numReplies++;
 		}
+		ViewMyView.newReplies = ViewMyView.numReplies - ViewMyView.readReplies;
 	}
 	
-//	protected static void refreshReplyListUnreadOnly(int postId) {
-//		ViewMyView.listView_Replies.getItems().clear();
-//		List<DiscussionReply> replies = theDatabase.getRepliesForPost(postId);
-//		for (DiscussionReply r : replies) {
-//			
-//			ViewMyView.listView_Replies.getItems().add(
-//				"[" + r.getId() + "] " + r.getBody() + " \u2014 " + r.getAuthor());
-//		}
-//	}
+	protected static void refreshReplyListUnreadOnly(int postId) {
+		ViewMyView.currentPostId = postId;
+		ViewMyView.listView_Replies.getItems().clear();
+		List<DiscussionReply> replies = theDatabase.getRepliesForPost(postId);
+		for (DiscussionReply r : replies) {
+			if (!theDatabase.unreadReply(r.getId())) {
+			ViewMyView.listView_Replies.getItems().add(
+				"[" + r.getId() + "] " + r.getBody() + " \u2014 " + r.getAuthor());
+			}
+
+		}
+////		ViewMyView.newReplies = ViewMyView.numReplies - ViewMyView.readReplies;
+	}
 	
 	
 	
@@ -201,25 +212,6 @@ public class ControllerMyView {
 		selectedPostId  = p.getId();
 		selectedReplyId = -1;
 
-		// Populate shared fields
-//		ViewMyView.text_Author.setText(p.getAuthor());
-//		ViewMyView.text_Title.setText(p.getTitle());
-
-//		if (p.isImagePost()) {
-//			// Switch toggle to IMAGE and show filename — body is not editable for image posts
-//			ViewMyView.radio_Keyword.setSelected(true);
-//			ViewMyView.label_ImageFile.setText(p.getImageFilename() != null
-//				? p.getImageFilename() : "image post");
-//			ViewMyView.text_Filter.setText("");
-//		} else {
-//			// Switch toggle to TEXT and populate the body field
-//			ViewMyView.radio_User.setSelected(true);
-//			ViewMyView.text_Filter.setText(p.getBody() != null ? p.getBody() : "");
-//		}
-
-//		ViewMyView.label_ErrorMessage.setText(
-//			"Selected: \"" + p.getTitle() + "\" (" + p.getPostType() + " post)");
-
 		refreshReplyList(selectedPostId);
 	}
 
@@ -231,7 +223,7 @@ public class ControllerMyView {
 	 * in selectedReplyId and populates the reply body field with its current text. </p>
 	 *
 	 */
-	protected static void selectReply() {
+	protected static void selectReply(){
 		int index = ViewMyView.listView_Replies.getSelectionModel().getSelectedIndex();
 		if (index == -1) return;
 
@@ -240,9 +232,7 @@ public class ControllerMyView {
 
 		DiscussionReply r = replies.get(index);
 		selectedReplyId = r.getId();
-
-		// Populate the reply body field so the user can edit it
-//		ViewMyView.text_ReplyBody.setText(r.getBody());
+		theDatabase.updateRead(selectedReplyId);
 	}
 
 
