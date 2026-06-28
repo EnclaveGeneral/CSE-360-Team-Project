@@ -24,4 +24,6 @@ module FoundationsF26 {
     opens passwordEvaluationTestbedMain to javafx.graphics, javafx.fxml;
     opens entityClasses to javafx.graphics, javafx.fxml;
     opens database to javafx.graphics, javafx.fxml;
+    opens guiMyView to javafx.graphics, javafx.fxml;
+    opens studentPostTests to javafx.graphics, javafx.fxml;
 }
