@@ -21,7 +21,6 @@ import entityClasses.DiscussionReply;
 import entityClasses.ImageComment;
 import entityClasses.ImagePost;
 import entityClasses.User;
-import guiMyView.ViewMyView;
 import javafx.scene.image.Image;
 
 /*******
@@ -101,7 +100,7 @@ public class Database {
 			connection = DriverManager.getConnection(DB_URL, USER, PASS);
 			statement = connection.createStatement(); 
 			// You can use this command to clear the database and restart from fresh.
-//			statement.execute("DROP ALL OBJECTS");
+			statement.execute("DROP ALL OBJECTS");
 
 			createTables();  // Create the necessary tables if they don't exist
 		} catch (ClassNotFoundException e) {
@@ -1538,20 +1537,31 @@ public class Database {
 	            "tags VARCHAR(255), " +
 	            "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)";
 
+	    // post_id is nullable so replies survive when their parent post is deleted.
+	    // post_deleted flags orphaned replies; original_post_id retains the grouping key
+	    // after post_id is nulled, so tombstone rows can be synthesised per deleted post.
 	    String repliesSql = "CREATE TABLE IF NOT EXISTS replies (" +
 	            "id INT AUTO_INCREMENT PRIMARY KEY, " +
-	            "post_id INT NOT NULL, " +
+	            "post_id INT, " +
+	            "original_post_id INT, " +
 	            "author VARCHAR(255) NOT NULL, " +
 	            "body CLOB NOT NULL, " +
-	            "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
-	            "read BOOLEAN DEFAULT FALSE, " +
-	            "FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE)";
+	            "post_deleted BOOLEAN DEFAULT FALSE, " +
+	            "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)";
 
 	    try (Statement stmt = connection.createStatement()) {
 	        stmt.execute(postsSql);
 	        stmt.execute(repliesSql);
 	    } catch (SQLException e) {
 	        e.printStackTrace();
+	    }
+
+	    // Migration for existing databases that pre-date these columns
+	    try (Statement stmt = connection.createStatement()) {
+	        stmt.execute("ALTER TABLE replies ADD COLUMN IF NOT EXISTS post_deleted BOOLEAN DEFAULT FALSE");
+	        stmt.execute("ALTER TABLE replies ADD COLUMN IF NOT EXISTS original_post_id INT");
+	    } catch (SQLException e) {
+	        // Silently ignored if columns already exist or the dialect rejects the syntax
 	    }
 	}
 
@@ -1668,7 +1678,7 @@ public class Database {
 	 */
 	public java.util.List<entityClasses.DiscussionReply> getRepliesForPost(int postId) {
 	    java.util.List<entityClasses.DiscussionReply> list = new java.util.ArrayList<>();
-	    String sql = "SELECT id, post_id, author, body, created_at, read FROM replies WHERE post_id = ? ORDER BY created_at ASC";
+	    String sql = "SELECT id, post_id, author, body, created_at FROM replies WHERE post_id = ? ORDER BY created_at ASC";
 	    try (PreparedStatement ps = connection.prepareStatement(sql)) {
 	        ps.setInt(1, postId);
 	        try (ResultSet rs = ps.executeQuery()) {
@@ -1678,8 +1688,7 @@ public class Database {
 	                        rs.getInt("post_id"),
 	                        rs.getString("author"),
 	                        rs.getString("body"),
-	                        rs.getString("created_at"),
-	                        rs.getBoolean("read")));
+	                        rs.getString("created_at")));
 	            }
 	        }
 	    } catch (SQLException e) {
@@ -1699,11 +1708,13 @@ public class Database {
 	 * @return the generated reply id, or -1 on failure
 	 */
 	public int addReply(int postId, String author, String body) {
-	    String sql = "INSERT INTO replies (post_id, author, body) VALUES (?, ?, ?)";
+	    // original_post_id is stored at insert time so it survives post deletion
+	    String sql = "INSERT INTO replies (post_id, original_post_id, author, body) VALUES (?, ?, ?, ?)";
 	    try (PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 	        ps.setInt(1, postId);
-	        ps.setString(2, author);
-	        ps.setString(3, body);
+	        ps.setInt(2, postId);      // original_post_id mirrors post_id at insert time
+	        ps.setString(3, author);
+	        ps.setString(4, body);
 	        ps.executeUpdate();
 	        try (ResultSet keys = ps.getGeneratedKeys()) {
 	            if (keys.next()) return keys.getInt(1);
@@ -1789,11 +1800,24 @@ public class Database {
 	/*******
 	 * <p> Method: deletePost </p>
 	 *
-	 * <p> Description: Deletes a post and all its replies (cascade). </p>
+	 * <p> Description: Deletes a post. Before removing the post row, all replies to that
+	 * post are marked post_deleted = TRUE and their post_id is set to NULL so they survive
+	 * the deletion. Callers can retrieve these orphaned replies via getOrphanedReplies()
+	 * and display a tombstone notice to users viewing them. </p>
 	 *
 	 * @param postId  the id of the post to delete
 	 */
 	public void deletePost(int postId) {
+	    // Orphan replies first; if we deleted the post row first the FK would reject this update
+	    // Null out post_id to release the FK; original_post_id retains the grouping key
+	    String orphanSql = "UPDATE replies SET post_deleted = TRUE, post_id = NULL WHERE post_id = ?";
+	    try (PreparedStatement ps = connection.prepareStatement(orphanSql)) {
+	        ps.setInt(1, postId);
+	        ps.executeUpdate();
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    }
+
 	    String sql = "DELETE FROM posts WHERE id = ?";
 	    try (PreparedStatement ps = connection.prepareStatement(sql)) {
 	        ps.setInt(1, postId);
@@ -1803,42 +1827,62 @@ public class Database {
 	    }
 	}
 
-
-
-	public void updateRead(int replyId) {
-		if (!unreadReply(replyId)) {
-		
-		    String sql = "UPDATE replies SET read = TRUE WHERE id = ?";
-		    try (PreparedStatement ps = connection.prepareStatement(sql)) {
-	//	        ps.setBoolean(1, true);
-		        ps.setInt(1, replyId);
-		        ps.executeUpdate();
-		        ViewMyView.readReplies++;
-		        ViewMyView.newReplies = ViewMyView.numReplies - ViewMyView.readReplies;
-		    } catch (SQLException e) {
-		        e.printStackTrace();
-		    }
-		}
+	/*******
+	 * <p> Method: getDeletedPostIds </p>
+	 *
+	 * <p> Description: Returns the distinct original_post_id values from all orphaned
+	 * replies. Each id represents a deleted post that still has surviving replies; the
+	 * controller uses these to synthesise tombstone rows in the post list so users can
+	 * click them and view the replies through the normal flow. </p>
+	 *
+	 * @return a List of original post ids that have at least one orphaned reply
+	 */
+	public java.util.List<Integer> getDeletedPostIds() {
+	    java.util.List<Integer> ids = new java.util.ArrayList<>();
+	    String sql = "SELECT DISTINCT original_post_id FROM replies WHERE post_deleted = TRUE ORDER BY original_post_id";
+	    try (PreparedStatement ps = connection.prepareStatement(sql);
+	         ResultSet rs = ps.executeQuery()) {
+	        while (rs.next()) {
+	            ids.add(rs.getInt("original_post_id"));
+	        }
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    }
+	    return ids;
 	}
-	
-	public boolean unreadReply(int replyId) {
-		String sql = "SELECT read FROM replies WHERE id = ?";
-	    boolean isRead = false;
-	    
-	    try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-	        pstmt.setInt(1, replyId); 
-	        
-	        try (ResultSet rs = pstmt.executeQuery()) {
-	            if (rs.next()) {
-	            	isRead = rs.getBoolean("read");
+
+
+	/*******
+	 * <p> Method: getOrphanedRepliesForPost </p>
+	 *
+	 * <p> Description: Returns all orphaned replies that originally belonged to the given
+	 * post id, ordered oldest-first. Called by the controller when the user clicks a
+	 * tombstone row in the post list; the reply list is then populated exactly as it
+	 * would be for a live post, preceded by a tombstone notice. </p>
+	 *
+	 * @param originalPostId  the original_post_id value identifying the deleted post
+	 * @return a List of DiscussionReply objects whose parent post has been deleted
+	 */
+	public java.util.List<entityClasses.DiscussionReply> getOrphanedRepliesForPost(int originalPostId) {
+	    java.util.List<entityClasses.DiscussionReply> list = new java.util.ArrayList<>();
+	    String sql = "SELECT id, author, body, created_at FROM replies " +
+	                 "WHERE post_deleted = TRUE AND original_post_id = ? ORDER BY created_at ASC";
+	    try (PreparedStatement ps = connection.prepareStatement(sql)) {
+	        ps.setInt(1, originalPostId);
+	        try (ResultSet rs = ps.executeQuery()) {
+	            while (rs.next()) {
+	                list.add(new entityClasses.DiscussionReply(
+	                        rs.getInt("id"),
+	                        -1,
+	                        rs.getString("author"),
+	                        rs.getString("body"),
+	                        rs.getString("created_at")));
 	            }
 	        }
 	    } catch (SQLException e) {
 	        e.printStackTrace();
 	    }
-	    
-	    return isRead;
-
+	    return list;
 	}
 	
 	public String getFilter(int replyId, boolean KeyType) {
