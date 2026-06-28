@@ -36,7 +36,6 @@ import javafx.stage.Stage;
  * @version 1.00	2026-06-15	Initial HW2 text-only discussion board
  * @version 2.00	2026-06-22	Added image post support
  * @version 3.00	2026-06-23	Unified board; text CRUD + image create/delete; reply CRUD
- * @version 4.00	2026-06-26	Ownership check on delete post/reply; students may only delete their own content
  */
 public class ControllerDiscussion {
 
@@ -49,11 +48,6 @@ public class ControllerDiscussion {
 	// -1 means nothing selected
 	private static int selectedPostId  = -1;
 	private static int selectedReplyId = -1;
-
-	// Mirrors the order of rows in listView_Posts, including tombstone entries.
-	// selectPost() indexes into this list rather than re-querying, so tombstone rows
-	// (which have no backing DB row) resolve correctly.
-	private static final java.util.List<DiscussionPost> displayedPosts = new java.util.ArrayList<>();
 
 	// Holds the image file chosen via FileChooser until Create Post is pressed
 	private static java.io.File pendingImageFile = null;
@@ -87,48 +81,34 @@ public class ControllerDiscussion {
 	/*******
 	 * <p> Method: refreshPostList() </p>
 	 *
-	 * <p> Description: Retrieves all live posts from the database and appends a tombstone
-	 * row for each deleted post that still has surviving replies. Tombstone rows use
-	 * postType "deleted" and id equal to the original post id, so selectPost() can route
-	 * them to getOrphanedRepliesForPost() rather than getRepliesForPost(). Called after
-	 * any post CRUD operation. </p>
+	 * <p> Description: Retrieves all posts from the database and repopulates listView_Posts.
+	 * Text posts are prefixed with a document icon; image posts with an image icon so the
+	 * user can distinguish post types at a glance. Called after any post CRUD operation. </p>
 	 *
 	 */
 	protected static void refreshPostList() {
 	    ViewDiscussion.listView_Posts.getItems().clear();
-	    displayedPosts.clear();
-	    ViewDiscussion.set_reset(false);
-
 	    List<DiscussionPost> posts = theDatabase.getAllPosts();
+	    ViewDiscussion.set_reset(false);
+	    
 	    for (DiscussionPost p : posts) {
-	        displayedPosts.add(p);
 	        String icon = p.isImagePost() ? "\uD83D\uDDBC" : "\uD83D\uDCC4";
+
 	        Label postLabel = new Label(icon + " [" + p.getId() + "] " + p.getTitle() + " — " + p.getAuthor());
+
 	        HBox postBox = new HBox(10);
 	        postBox.setPadding(new Insets(5));
 	        postBox.getChildren().add(postLabel);
+	        
 	        String rawTags = p.getTags();
 	        String[] tags = (rawTags != null && !rawTags.isEmpty()) ? rawTags.split(" ") : new String[0];
 	        for (String tag : tags) {
 	            Button tagButton = new Button("#" + tag);
-	            tagButton.setOnAction(_ -> filter_by_tags(tag));
+	            tagButton.setOnAction(event -> filter_by_tags(tag));
 	            postBox.getChildren().add(tagButton);
 	        }
-	        ViewDiscussion.listView_Posts.getItems().add(postBox);
-	    }
 
-	    // Append a tombstone row for each deleted post that still has surviving replies,
-	    // so users can click the row and view those replies through the normal flow.
-	    for (int deletedId : theDatabase.getDeletedPostIds()) {
-	        DiscussionPost tombstone = new DiscussionPost(
-	            deletedId, "", "[Deleted post — replies still available]",
-	            null, "deleted", null, null, null, "");
-	        displayedPosts.add(tombstone);
-	        Label tombLabel = new Label("\uD83D\uDDD1 [" + deletedId + "] [This post has been deleted]");
-	        HBox tombBox = new HBox(10);
-	        tombBox.setPadding(new Insets(5));
-	        tombBox.getChildren().add(tombLabel);
-	        ViewDiscussion.listView_Posts.getItems().add(tombBox);
+	        ViewDiscussion.listView_Posts.getItems().add(postBox);
 	    }
 	}
 
@@ -154,7 +134,7 @@ public class ControllerDiscussion {
 
 	        for (String t : tags) {
 	            Button tagButton = new Button("#" + t);
-	            tagButton.setOnAction(_ -> filter_by_tags(t));
+	            tagButton.setOnAction(event -> filter_by_tags(t));
 	            postBox.getChildren().add(tagButton);
 	        }
 	     
@@ -184,30 +164,6 @@ public class ControllerDiscussion {
 	}
 
 
-	/*******
-	 * <p> Method: refreshOrphanedReplies(int originalPostId) </p>
-	 *
-	 * <p> Description: Loads all replies that originally belonged to the given deleted post
-	 * and displays them in listView_Replies, preceded by a tombstone notice. This is called
-	 * automatically by selectPost() when the user clicks a tombstone row, so the experience
-	 * is identical to viewing replies on a live post. </p>
-	 *
-	 * @param originalPostId  the original_post_id that groups the orphaned replies
-	 *
-	 */
-	protected static void refreshOrphanedReplies(int originalPostId) {
-		ViewDiscussion.listView_Replies.getItems().clear();
-		// Tombstone notice goes first so it is immediately visible without scrolling
-		ViewDiscussion.listView_Replies.getItems().add(
-			"\u26A0 The original post has been deleted. Replies are preserved below:");
-		List<DiscussionReply> orphans = theDatabase.getOrphanedRepliesForPost(originalPostId);
-		for (DiscussionReply r : orphans) {
-			ViewDiscussion.listView_Replies.getItems().add(
-				"[" + r.getId() + "] " + r.getBody() + " \u2014 " + r.getAuthor());
-		}
-	}
-
-
 	/*-*******************************************************************************************
 
 	Selection methods
@@ -224,23 +180,14 @@ public class ControllerDiscussion {
 	 */
 	protected static void selectPost() {
 		int index = ViewDiscussion.listView_Posts.getSelectionModel().getSelectedIndex();
-		if (index == -1 || index >= displayedPosts.size()) return;
+		if (index == -1) return;
 
-		DiscussionPost p = displayedPosts.get(index);
+		List<DiscussionPost> posts = theDatabase.getAllPosts();
+		if (index >= posts.size()) return;
+
+		DiscussionPost p = posts.get(index);
 		selectedPostId  = p.getId();
 		selectedReplyId = -1;
-
-		if ("deleted".equals(p.getPostType())) {
-			// Tombstone row: clear the input fields and load orphaned replies with a notice
-			ViewDiscussion.text_Author.setText("");
-			ViewDiscussion.text_Title.setText("");
-			ViewDiscussion.text_Body.setText("");
-			ViewDiscussion.text_tags.setText("");
-			ViewDiscussion.radio_Text.setSelected(true);
-			ViewDiscussion.label_ErrorMessage.setText("This post has been deleted.");
-			refreshOrphanedReplies(selectedPostId);
-			return;
-		}
 
 		// Populate shared fields
 		ViewDiscussion.text_Author.setText(p.getAuthor());
@@ -257,10 +204,12 @@ public class ControllerDiscussion {
 			ViewDiscussion.radio_Text.setSelected(true);
 			ViewDiscussion.text_Body.setText(p.getBody() != null ? p.getBody() : "");
 		}
-
+		
 		ViewDiscussion.text_tags.setText(p.getTags() != null ? p.getTags() : "");
+
 		ViewDiscussion.label_ErrorMessage.setText(
 			"Selected: \"" + p.getTitle() + "\" (" + p.getPostType() + " post)");
+
 		refreshReplyList(selectedPostId);
 	}
 
@@ -280,6 +229,7 @@ public class ControllerDiscussion {
 		if (index >= replies.size()) return;
 
 		DiscussionReply r = replies.get(index);
+		r.setRead(true);
 		selectedReplyId = r.getId();
 
 		// Populate the reply body field so the user can edit it
@@ -414,40 +364,30 @@ public class ControllerDiscussion {
 	/*******
 	 * <p> Method: performDeletePost() </p>
 	 *
-	 * <p> Description: Handles the Delete Post button. Validates that a post is selected
-	 * and that the currently logged-in user is the author of that post — students may only
-	 * delete their own posts. Shows an "Are you sure?" confirmation dialog before deleting.
-	 * Resets both selection sentinels, clears the reply list, and refreshes the post list. </p>
+	 * <p> Description: Handles the Delete Post button. Validates that a post is selected,
+	 * deletes it from the database (cascade removes its replies), resets both selection
+	 * sentinels, clears the reply list, and refreshes the post list. </p>
 	 *
 	 */
 	protected static void performDeletePost() {
 		if (selectedPostId == -1) { setError("Please select a post to delete."); return; }
+		
+		// confirmation
+		Alert alert = new Alert(AlertType.INFORMATION);
+        alert.setTitle("confirmation");
+        alert.setHeaderText("confirmation");
+        alert.setContentText("are you sure you want to delete the post?");
 
-		// selectedPostId is an index, not a direct reference — walk the list to get the entity
-		List<DiscussionPost> posts = theDatabase.getAllPosts();
-		DiscussionPost target = null;
-		for (DiscussionPost p : posts) {
-			if (p.getId() == selectedPostId) { target = p; break; }
-		}
-		if (target == null) { setError("Error: Selected post not found."); return; }
-		if (!target.getAuthor().equals(ViewDiscussion.theUser.getUserName())) {
-			setError("Error: You can only delete your own posts.");
-			return;
-		}
+        ButtonType buttonYes = new ButtonType("Yes", ButtonData.YES);
+        ButtonType buttonNo = new ButtonType("No", ButtonData.NO);
+        alert.getButtonTypes().setAll(buttonYes, buttonNo);
 
-		// AlertType.CONFIRMATION gives the correct icon; INFORMATION (the original) did not
-		Alert alert = new Alert(AlertType.CONFIRMATION);
-		alert.setTitle("Delete Post");
-		alert.setHeaderText("Are you sure?");
-		alert.setContentText("Are you sure you want to delete this post?");
+        Optional<ButtonType> result = alert.showAndWait();
 
-		ButtonType buttonYes = new ButtonType("Yes", ButtonData.YES);
-		ButtonType buttonNo  = new ButtonType("No",  ButtonData.NO);
-		alert.getButtonTypes().setAll(buttonYes, buttonNo);
-
-		Optional<ButtonType> result = alert.showAndWait();
-		if (result.isPresent() && result.get() == buttonNo) return;
-
+        if (result.isPresent() && result.get() == buttonNo) {
+            return;
+        }
+		
 		theDatabase.deletePost(selectedPostId);
 		selectedPostId  = -1;
 		selectedReplyId = -1;
@@ -519,26 +459,12 @@ public class ControllerDiscussion {
 	 * <p> Method: performDeleteReply() </p>
 	 *
 	 * <p> Description: Handles the Delete Reply button. Validates that both a post and a reply
-	 * are selected and that the currently logged-in user is the author of that reply — students
-	 * may only delete their own replies. Deletes the reply, resets selectedReplyId, and
-	 * refreshes the reply list. </p>
+	 * are selected, deletes the reply, resets selectedReplyId, and refreshes the reply list. </p>
 	 *
 	 */
 	protected static void performDeleteReply() {
 		if (selectedPostId  == -1) { setError("Please select a post first."); return; }
 		if (selectedReplyId == -1) { setError("Please select a reply to delete."); return; }
-
-		// Same pattern as performDeletePost: resolve the entity before comparing authors
-		List<DiscussionReply> replies = theDatabase.getRepliesForPost(selectedPostId);
-		DiscussionReply target = null;
-		for (DiscussionReply r : replies) {
-			if (r.getId() == selectedReplyId) { target = r; break; }
-		}
-		if (target == null) { setError("Error: Selected reply not found."); return; }
-		if (!target.getAuthor().equals(ViewDiscussion.theUser.getUserName())) {
-			setError("Error: You can only delete your own replies.");
-			return;
-		}
 
 		theDatabase.deleteReply(selectedReplyId);
 		selectedReplyId = -1;

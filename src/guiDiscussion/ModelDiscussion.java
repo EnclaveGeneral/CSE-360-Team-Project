@@ -9,11 +9,10 @@ package guiDiscussion;
  *
  * <p> Copyright: Lynn Robert Carter © 2025 </p>
  *
- * @author Weiye (Richard) Zhang, Jack H.
+ * @author Weiye (Richard) Zhang
  *
  * @version 1.00	2026-06-15	Initial version for HW2 text-only discussion board
  * @version 2.00	2026-06-23	Added validateImageFile(); removed isPinned/isAccepted validation
- * @version 2.01    2026-06-26  Made these classes public for testing
  */
 public class ModelDiscussion {
 
@@ -41,7 +40,7 @@ public class ModelDiscussion {
 	 * @return an empty String if the title is valid, or an error message String if not
 	 *
 	 */
-	public static String validateTitle(String title) {
+	protected static String validateTitle(String title) {
 		if (title == null || title.isBlank())
 			return "Error: Post title cannot be empty.";
 		return "";
@@ -60,7 +59,7 @@ public class ModelDiscussion {
 	 * @return an empty String if the body is valid, or an error message String if not
 	 *
 	 */
-	public static String validateBody(String body) {
+	protected static String validateBody(String body) {
 		if (body == null || body.isBlank())
 			return "Error: Body cannot be empty.";
 		return "";
@@ -78,7 +77,7 @@ public class ModelDiscussion {
 	 * @return an empty String if the author is valid, or an error message String if not
 	 *
 	 */
-	public static String validateAuthor(String author) {
+	protected static String validateAuthor(String author) {
 		if (author == null || author.isBlank())
 			return "Error: Author cannot be empty.";
 		return "";
@@ -98,7 +97,7 @@ public class ModelDiscussion {
 	 * @return an empty String if a file was selected, or an error message String if not
 	 *
 	 */
-	public static String validateImageFile(java.io.File file) {
+	protected static String validateImageFile(java.io.File file) {
 		if (file == null)
 			return "Error: No image file selected.";
 		return "";
