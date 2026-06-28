@@ -331,14 +331,13 @@ public class ViewDiscussion {
 	}
 	
 	public static void set_reset(boolean c){
-		reset = c;
 		
-		if(reset) {
+		if (!c) {
+			theRootPane.getChildren().remove(button_reset_filter);
+		} else if (c && !theRootPane.getChildren().contains(button_reset_filter)) {
 			theRootPane.getChildren().add(button_reset_filter);
 		}
-		else {
-			theRootPane.getChildren().remove(button_reset_filter);
-		}
+		
 	}
 
 
