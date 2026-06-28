@@ -9,6 +9,8 @@ import javafx.scene.shape.Line;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import applicationMain.FoundationsMain;
+import guiAdminHome.ControllerAdminHome;
+import guiAdminHome.ViewAdminHome;
 
 
 /*******
@@ -44,6 +46,7 @@ public class ViewMyView {
 	static entityClasses.User theUser;
 	
 	private static boolean reset = false;
+	private static boolean selection = false;
 
 	private static double width  	= FoundationsMain.WINDOW_WIDTH;
 	private static double height = FoundationsMain.WINDOW_HEIGHT;
@@ -247,7 +250,7 @@ public class ViewMyView {
 
 		// ── Status + navigation (y 623–710) ──────────────────────────────────────
 		setupButton(button_Back, "Dialog", 13, 110, Pos.CENTER, 660, 665);
-		button_Back.setOnAction((_) -> guiMyView.ControllerMyView.doNothing());
+		button_Back.setOnAction((_) -> {guiDiscussion.ViewDiscussion.displayDiscussion(theStage, theUser); });
 		
 		setupButton(button_ShowAll, "Dialog", 13, 110, Pos.CENTER, 20, 620);
 		button_ShowAll.setOnAction((_) -> {
@@ -259,7 +262,10 @@ public class ViewMyView {
 		button_UnreadOnly.setOnAction((_) -> ControllerMyView.refreshReplyListUnreadOnly(currentPostId));
 		
 		setupButton(button_Search, "Dialog", 13, 110, Pos.CENTER, 660, 393);
-		button_Search.setOnAction((_) -> guiMyView.ControllerMyView.doNothing());
+		button_Search.setOnAction((_) -> {
+			selection = (toggle_PostType.getSelectedToggle() == radio_User) ? true : false;
+			ControllerMyView.filterByKeyword(currentPostId, selection, text_Filter.getText());
+		});
 
 		// Add all widgets to the pane
 		theRootPane.getChildren().addAll(

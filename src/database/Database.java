@@ -1884,5 +1884,27 @@ public class Database {
 	    }
 	    return list;
 	}
+	
+	public String getFilter(int replyId, boolean KeyType) {
+		String keySelection = (KeyType) ? "author" : "body";
+		String toReturn ="";
+		
+		String sql = "SELECT ? FROM replies WHERE id = ?";
+	    
+	    try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+	    	pstmt.setString(1, keySelection);
+	    	pstmt.setInt(2, replyId); 
+	        
+	        try (ResultSet rs = pstmt.executeQuery()) {
+	            if (rs.next()) {
+	            	toReturn = rs.getString(keySelection);
+	            }
+	        }
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    }
+	    
+	    return toReturn;
 
+	}
 }

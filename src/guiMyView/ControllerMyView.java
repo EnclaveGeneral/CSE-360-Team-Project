@@ -1,6 +1,7 @@
 package guiMyView;
 
 import java.io.FileInputStream;
+
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Arrays;
@@ -181,6 +182,34 @@ public class ControllerMyView {
 		}
 ////		ViewMyView.newReplies = ViewMyView.numReplies - ViewMyView.readReplies;
 	}
+	
+	protected static void filterByKeyword(int postId, boolean filterByName, String keyword) {
+		ViewMyView.currentPostId = postId;
+		ViewMyView.listView_Replies.getItems().clear();
+		List<DiscussionReply> replies = theDatabase.getRepliesForPost(postId);
+		
+		if (filterByName) {
+			for (DiscussionReply r : replies) {
+				if (r.getAuthor().toLowerCase().equals(keyword.toLowerCase())) {
+					ViewMyView.listView_Replies.getItems().add(
+						"[" + r.getId() + "] " + r.getBody() + " \u2014 " + r.getAuthor());
+					if (r.getRead()) {ViewMyView.readReplies++;}
+					ViewMyView.numReplies++;
+				}
+			}			
+		} else {
+			for (DiscussionReply r : replies) {
+				if (r.getBody().toLowerCase().contains(keyword.toLowerCase())) {
+					ViewMyView.listView_Replies.getItems().add(
+						"[" + r.getId() + "] " + r.getBody() + " \u2014 " + r.getAuthor());
+					if (r.getRead()) {ViewMyView.readReplies++;}
+					ViewMyView.numReplies++;
+				}
+			}
+		}
+	}
+
+	
 	
 	
 	
