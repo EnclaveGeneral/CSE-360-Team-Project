@@ -1,27 +1,16 @@
 package guiMyView;
 
-import java.io.FileInputStream;
 
-import java.io.IOException;
-import java.sql.SQLException;
-import java.util.Arrays;
+
 import java.util.List;
-import java.util.Optional;
 
 import database.Database;
 import entityClasses.DiscussionPost;
 import entityClasses.DiscussionReply;
-import guiAdminHome.ViewAdminHome;
 import applicationMain.FoundationsMain;
 import javafx.geometry.Insets;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Alert.AlertType;
-import javafx.scene.control.Button;
-import javafx.scene.control.ButtonBar.ButtonData;
-import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
-import javafx.stage.Stage;
 
 /*******
  * <p> Title: ControllerMyView Class </p>
@@ -51,9 +40,6 @@ public class ControllerMyView {
 	// -1 means nothing selected
 	private static int selectedPostId  = -1;
 	private static int selectedReplyId = -1;
-
-	// Holds the image file chosen via FileChooser until Create Post is pressed
-	private static java.io.File pendingImageFile = null;
 
 	private static Database theDatabase = FoundationsMain.database;
 
@@ -92,7 +78,6 @@ public class ControllerMyView {
 	protected static void refreshPostList() {
 	    ViewMyView.listView_Posts.getItems().clear();
 	    List<DiscussionPost> posts = theDatabase.getAllPosts();
-//	    ViewMyView.set_reset(false);
 	    
 	    for (DiscussionPost p : posts) {
 	        String icon = p.isImagePost() ? "\uD83D\uDDBC" : "\uD83D\uDCC4";
@@ -103,44 +88,10 @@ public class ControllerMyView {
 	        postBox.setPadding(new Insets(5));
 	        postBox.getChildren().add(postLabel);
 
-	        String[] tags = p.getTags().split(" ");
-	        for (String tag : tags) {
-	            Button tagButton = new Button("#" + tag);
-	            tagButton.setOnAction(event -> filter_by_tags(tag));
-	            postBox.getChildren().add(tagButton);
-	        }
-
 	        ViewMyView.listView_Posts.getItems().add(postBox);
 	    }
 	}
 
-	protected static void filter_by_tags(String tag) {
-	    ViewMyView.listView_Posts.getItems().clear();
-	    List<DiscussionPost> posts = theDatabase.getAllPosts();
-//	    ViewMyView.set_reset(true);
-	    
-	    for (DiscussionPost p : posts) {
-	        String[] tags = p.getTags().split(" ");
-	        if (!Arrays.asList(tags).contains(tag)) {
-	            continue;
-	        }
-
-	        String icon = p.isImagePost() ? "\uD83D\uDDBC" : "\uD83D\uDCC4";
-	        Label postLabel = new Label(icon + " [" + p.getId() + "] " + p.getTitle() + " — " + p.getAuthor());
-
-	        HBox postBox = new HBox(10);
-	        postBox.setPadding(new Insets(5));
-	        postBox.getChildren().add(postLabel);
-
-	        for (String t : tags) {
-	            Button tagButton = new Button("#" + t);
-	            tagButton.setOnAction(event -> filter_by_tags(t));
-	            postBox.getChildren().add(tagButton);
-	        }
-	     
-	        ViewMyView.listView_Posts.getItems().add(postBox);
-	    }
-	}
 
 
 	/*******
@@ -169,6 +120,14 @@ public class ControllerMyView {
 		ViewMyView.newReplies = ViewMyView.numReplies - ViewMyView.readReplies;
 	}
 	
+	/*******
+	 * <p> Method: refreshReplyListUnreadOnly(int postId) </p>
+	 *
+	 * <p> Description: Refreshes the view to only show replies that have not been marked as read. </p>
+	 *
+	 * @param postId is an int that specifies the unique identifier of the parent post whose
+	 *               replies should be loaded.
+	 */
 	protected static void refreshReplyListUnreadOnly(int postId) {
 		ViewMyView.currentPostId = postId;
 		ViewMyView.listView_Replies.getItems().clear();
@@ -180,9 +139,21 @@ public class ControllerMyView {
 			}
 
 		}
-////		ViewMyView.newReplies = ViewMyView.numReplies - ViewMyView.readReplies;
 	}
 	
+	/*******
+	 * <p> Method: filterByKeyword(int postId, boolean filterByName, String keyword) </p>
+	 *
+	 * <p> Description: Refreshes the view to only show replies matches the keyword.
+	 * this keyword can be used to target the User name or text body. </p>
+	 *
+	 * @param postId is an int that specifies the unique identifier of the parent post whose
+	 *               replies should be loaded.
+	 *               
+	 * @param filterByName A boolean value which specifies which of the two toggle buttons are selected.
+	 * 
+	 * @param keyword String key that will be used to filter the messages.
+	 */
 	protected static void filterByKeyword(int postId, boolean filterByName, String keyword) {
 		ViewMyView.currentPostId = postId;
 		ViewMyView.listView_Replies.getItems().clear();
@@ -208,13 +179,6 @@ public class ControllerMyView {
 			}
 		}
 	}
-
-	
-	
-	
-	
-	
-
 
 	/*-*******************************************************************************************
 
@@ -270,34 +234,13 @@ public class ControllerMyView {
 	Post action methods
 
 	**********************************************************************************************/
-
+	
 	/*******
-	 * <p> Method: performPickImage(Stage stage) </p>
+	 * <p> Method: launchMyView() </p>
 	 *
-	 * <p> Description: Opens a FileChooser dialog so the user can select a PNG, JPG, or JPEG
-	 * file. Stores the chosen file in pendingImageFile and updates the filename label. The
-	 * file is not saved to the database until Create Post is pressed. </p>
-	 *
-	 * @param stage is the current JavaFX Stage required to open the FileChooser dialog.
+	 * <p> Description: method that is used to launch the gui of myView in MVC style. </p>
 	 *
 	 */
-//	protected static void performPickImage(Stage stage) {
-//		javafx.stage.FileChooser fc = new javafx.stage.FileChooser();
-//		fc.setTitle("Select Image");
-//		fc.getExtensionFilters().add(
-//			new javafx.stage.FileChooser.ExtensionFilter(
-//				"Image Files", "*.png", "*.jpg", "*.jpeg"));
-//
-//		java.io.File home = new java.io.File(System.getProperty("user.home"), "Downloads");
-//		if (home.exists()) fc.setInitialDirectory(home);
-//
-//		java.io.File chosen = fc.showOpenDialog(stage);
-//		if (chosen != null) {
-//			pendingImageFile = chosen;
-//			ViewMyView.label_ImageFile.setText(chosen.getName());
-//		}
-//	}
-	
 	public static void launchMyView() {
 		guiMyView.ViewMyView.displayMyView(ViewMyView.theStage, ViewMyView.theUser);
 	}
@@ -316,9 +259,9 @@ public class ControllerMyView {
 	 * whether to route to the Admin home (1) or Role1 home (any other value). </p>
 	 *
 	 */
-	protected static void xx() {
+	protected static void performBack() {
 		if (FoundationsMain.activeHomePage == 1) {
-			guiAdminHome.ViewAdminHome.displayAdminHome(
+			guiDiscussion.ViewDiscussion.displayDiscussion(
 				ViewMyView.theStage, ViewMyView.theUser);
 		} else {
 			guiRole1.ViewRole1Home.displayRole1Home(
@@ -326,57 +269,5 @@ public class ControllerMyView {
 		}
 	}
 
-
-	/*-*******************************************************************************************
-
-	Private helper methods
-
-	**********************************************************************************************/
-
-	/*******
-	 * <p> Method: setError(String message) </p>
-	 *
-	 * <p> Description: Sets the error message label in ViewDiscussion with the provided text.
-	 * Centralises all error reporting through a single call. </p>
-	 *
-	 * @param message is a String that specifies the error message to display.
-	 *
-	 */
-//	private static void setError(String message) {
-//		ViewMyView.label_ErrorMessage.setText("Error: " + message);
-//	}
-
-
-	/*******
-	 * <p> Method: setSuccess(String message) </p>
-	 *
-	 * <p> Description: Sets the status label in ViewDiscussion with a success confirmation
-	 * message. Centralises all success reporting through a single call. </p>
-	 *
-	 * @param message is a String that specifies the success message to display.
-	 *
-	 */
-//	private static void setSuccess(String message) {
-//		ViewMyView.label_ErrorMessage.setTextFill(javafx.scene.paint.Color.web("#6bcb77"));
-//		ViewMyView.label_ErrorMessage.setText(message);
-//	}
-	
-	public static boolean doNothing() {
-		return true;
-	}
-
-
-	/*******
-	 * <p> Method: clearPostFields() </p>
-	 *
-	 * <p> Description: Clears the post input fields (Author, Title, Body) and resets the
-	 * toggle to TEXT after any successful post CRUD operation. </p>
-	 *
-	 */
-	private static void clearPostFields() {
-		ViewMyView.radio_User.setSelected(true);
-//		ViewMyView.label_ImageFile.setText("No file selected.");
-		pendingImageFile = null;
-	}
 
 }

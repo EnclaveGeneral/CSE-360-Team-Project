@@ -9,8 +9,7 @@ import javafx.scene.shape.Line;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import applicationMain.FoundationsMain;
-import guiAdminHome.ControllerAdminHome;
-import guiAdminHome.ViewAdminHome;
+
 
 
 /*******
@@ -45,16 +44,35 @@ public class ViewMyView {
 	static Stage              theStage;
 	static entityClasses.User theUser;
 	
-	private static boolean reset = false;
 	private static boolean selection = false;
 
 	private static double width  	= FoundationsMain.WINDOW_WIDTH;
 	private static double height = FoundationsMain.WINDOW_HEIGHT;
 	
+	
+	/***
+	 * Records number of posts.
+	 */
 	public static int numPosts = 0;
+	
+	/***
+	 * Records number of replies.
+	 */
 	public static int numReplies = 0;
+	
+	/***
+	 * Records number of read replies.
+	 */
 	public static int readReplies = 0;
+	
+	/***
+	 * Records number of new replies to a post.
+	 */
 	public static int newReplies = 0;
+	
+	/***
+	 * Records the id of the current post selected to be passed to different methods.
+	 */
 	public static int currentPostId = 0;
 
 
@@ -114,14 +132,6 @@ public class ViewMyView {
 	static Label 	 label_ReadVsUndreadReplies = new Label("Read Replies: " + readReplies + " New Replies: " + newReplies);
 	static Label 	 label_Filter = new Label("Filter by:");
 
-//	static Label     label_ReplyBody = new Label("Body:");
-//	static TextField text_ReplyBody  = new TextField();
-	
-
-//	// Reply CRUD buttons — replies are always text
-//	static Button button_CreateReply = new Button("Create Reply");
-//	static Button button_UpdateReply = new Button("Update Reply");
-//	static Button button_DeleteReply = new Button("Delete Reply");
 
 	static ListView<String> listView_Replies = new ListView<>();
 
@@ -182,12 +192,11 @@ public class ViewMyView {
 	**********************************************************************************************/
 
 	/*******
-	 * <p> Method: ViewDiscussion() </p>
+	 * <p> Method: ViewMyView() </p>
 	 *
 	 * <p> Description: This private constructor initializes all elements of the graphical user
 	 * interface. It determines the location, size, font, colour, and event handlers for each
-	 * GUI widget. This method is only called once due to the Singleton design pattern.
-	 * Subsequent calls to displayDiscussion() reuse the already-initialized scene. </p>
+	 * GUI widget. This method is only called once due to the Singleton design pattern. </p>
 	 *
 	 */
 	private ViewMyView() {
@@ -250,7 +259,7 @@ public class ViewMyView {
 
 		// ── Status + navigation (y 623–710) ──────────────────────────────────────
 		setupButton(button_Back, "Dialog", 13, 110, Pos.CENTER, 660, 665);
-		button_Back.setOnAction((_) -> {guiDiscussion.ViewDiscussion.displayDiscussion(theStage, theUser); });
+		button_Back.setOnAction((_) -> {ControllerMyView.performBack(); });
 		
 		setupButton(button_ShowAll, "Dialog", 13, 110, Pos.CENTER, 20, 620);
 		button_ShowAll.setOnAction((_) -> {
@@ -286,16 +295,6 @@ public class ViewMyView {
 		FoundationsMain.database.createDiscussionTables();
 	}
 	
-//	public static void set_reset(boolean c){
-//		reset = c;
-//		
-//		if(reset) {
-//			theRootPane.getChildren().add(button_reset_filter);
-//		}
-//		else {
-//			theRootPane.getChildren().remove(button_reset_filter);
-//		}
-//	}
 
 
 	/*-*******************************************************************************************
@@ -304,6 +303,13 @@ public class ViewMyView {
 
 	**********************************************************************************************/
 	
+	
+	/*******
+	 * <p> Method: refreshLabels </p>
+	 *
+	 * <p> Description: Public local method to refresh the standard fields for a Label. </p>
+
+	 */
 	public void refreshLabels() {
 		label_numReplies.setText("Number of replies: " + numReplies);
 		label_ReadVsUndreadReplies.setText("Read Replies: " + readReplies + " New Replies: " + newReplies);

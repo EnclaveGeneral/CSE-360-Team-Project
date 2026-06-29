@@ -9,10 +9,9 @@ package guiMyView;
  *
  * <p> Copyright: Lynn Robert Carter © 2025 </p>
  *
- * @author Weiye (Richard) Zhang
+ * @author Omid Kadkhodaei
  *
  * @version 1.00	2026-06-15	Initial version for HW2 text-only MyView board
- * @version 2.00	2026-06-23	Added validateImageFile(); removed isPinned/isAccepted validation
  */
 public class ModelMyView {
 
