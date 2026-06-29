@@ -496,6 +496,85 @@ public class ControllerDiscussion {
 				ViewDiscussion.theStage, ViewDiscussion.theUser);
 		}
 	}
+	
+	
+	// XX
+	
+	/********************************************************************************************
+
+	Search
+
+	**********************************************************************************************
+
+	/*******
+	 * <p> Method: performSearch() </p>
+	 *
+	 * <p> Description: XX </p>
+	 *
+	 */
+	protected static void performSearch() {
+		String keyword = ViewDiscussion.text_Search.getText().trim();
+		String category = ViewDiscussion.combobox_SearchCategory.getValue();
+
+		if (keyword.isEmpty()) {
+			
+			refreshPostList();
+			
+			if (selectedPostId != -1) {
+				refreshReplyList(selectedPostId);
+			}
+			
+			else ViewDiscussion.listView_Replies.getItems().clear();
+			
+			setSuccess("Showing all records.");
+			
+			return;
+		}
+
+		if (category.equals("Posts") || category.equals("All")) {
+			
+			ViewDiscussion.listView_Posts.getItems().clear();
+			
+			List<DiscussionPost> posts = theDatabase.searchPosts(keyword);
+			
+			for (DiscussionPost p : posts) {
+				String icon = p.isImagePost() ? "\uD83D\uDDBC" : "\uD83D\uDCC4";
+				Label postLabel = new Label(icon + " [" + p.getId() + "] " + p.getTitle() + " — " + p.getAuthor());
+				HBox postBox = new HBox(10);
+				postBox.setPadding(new Insets(5));
+				postBox.getChildren().add(postLabel);
+				
+				String rawTags = p.getTags();
+				String[] tags = (rawTags != null && !rawTags.isEmpty()) ? rawTags.split(" ") : new String[0];
+				
+				for (String tag : tags) {
+					Button tagButton = new Button("#" + tag);
+					tagButton.setOnAction(event -> filter_by_tags(tag));
+					postBox.getChildren().add(tagButton);
+				}
+				ViewDiscussion.listView_Posts.getItems().add(postBox);
+			}
+		} else {
+			ViewDiscussion.listView_Posts.getItems().clear();
+		}
+
+		if (category.equals("Replies") || category.equals("All")) {
+			ViewDiscussion.listView_Replies.getItems().clear();
+			List<DiscussionReply> replies = theDatabase.searchReplies(keyword);
+			
+			for (DiscussionReply r : replies) {
+				ViewDiscussion.listView_Replies.getItems().add(
+					"[" + r.getId() + "] (Post " + r.getPostId() + ") " + r.getBody() + " \u2014 " + r.getAuthor()
+				);
+			}
+		} else {
+			ViewDiscussion.listView_Replies.getItems().clear();
+		}
+		setSuccess("Search complete.");
+	}
+	
+	
+	// XX
 
 
 	/*-*******************************************************************************************

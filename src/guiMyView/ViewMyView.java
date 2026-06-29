@@ -9,8 +9,6 @@ import javafx.scene.shape.Line;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import applicationMain.FoundationsMain;
-import guiAdminHome.ControllerAdminHome;
-import guiAdminHome.ViewAdminHome;
 
 
 /*******
@@ -46,16 +44,14 @@ public class ViewMyView {
 	static entityClasses.User theUser;
 	
 	private static boolean reset = false;
-	private static boolean selection = false;
 
-	private static double width  	= FoundationsMain.WINDOW_WIDTH;
+	private static double width  = FoundationsMain.WINDOW_WIDTH;
 	private static double height = FoundationsMain.WINDOW_HEIGHT;
 	
-	public static int numPosts = 0;
-	public static int numReplies = 0;
-	public static int readReplies = 0;
-	public static int newReplies = 0;
-	public static int currentPostId = 0;
+	private static int numPosts = 0;
+	private static int numReplies = 0;
+	private static int readReplies = 0;
+	private static int newReplies = 0;
 
 
 	/*-*******************************************************************************************
@@ -135,10 +131,10 @@ public class ViewMyView {
 	**********************************************************************************************/
 
 //	static Label  label_ErrorMessage = new Label("");
-	static Button button_Back       	= new Button("Back");
+	static Button button_Back        = new Button("Back");
 	static Button button_ShowAll        = new Button("Show all");
-	static Button button_UnreadOnly     = new Button("Show unread");
-	static Button button_Search         = new Button("Search");
+	static Button button_UnreadOnly        = new Button("Show unread");
+	static Button button_Search        = new Button("Search");
 
 
 	/*-*******************************************************************************************
@@ -219,10 +215,7 @@ public class ViewMyView {
 		listView_Posts.setLayoutY(130);
 		listView_Posts.setPrefWidth(760);
 		listView_Posts.setPrefHeight(220);
-		listView_Posts.setOnMouseClicked((_) -> {
-			ControllerMyView.selectPost();
-			refreshLabels();
-			});
+		listView_Posts.setOnMouseClicked((_) -> ControllerMyView.selectPost());
 
 		// ── Reply input (y 370–470) ───────────────────────────────────────────────
 		setupLabel(label_ReplySection, "Arial", 13, 100, Pos.BASELINE_LEFT, 20, 372);
@@ -243,29 +236,20 @@ public class ViewMyView {
 		listView_Replies.setLayoutY(458);
 		listView_Replies.setPrefWidth(760);
 		listView_Replies.setPrefHeight(150);
-		listView_Replies.setOnMouseClicked(event -> {
-			ControllerMyView.selectReply();
-			refreshLabels();
-			});
+		listView_Replies.setOnMouseClicked((_) -> ControllerMyView.selectReply());
 
-		// ── Status + navigation (y 623–710) ──────────────────────────────────────
+		// ── Status + navigation (y 623–710) ────────────────────────────────────── XX - Back button not working fix
 		setupButton(button_Back, "Dialog", 13, 110, Pos.CENTER, 660, 665);
-		button_Back.setOnAction((_) -> {guiDiscussion.ViewDiscussion.displayDiscussion(theStage, theUser); });
+		button_Back.setOnAction((_) -> ControllerMyView.xx());
 		
 		setupButton(button_ShowAll, "Dialog", 13, 110, Pos.CENTER, 20, 620);
-		button_ShowAll.setOnAction((_) -> {
-			ControllerMyView.refreshReplyList(currentPostId);
-			refreshLabels();
-			});
+		button_ShowAll.setOnAction((_) -> ControllerMyView.showAllReplies());       // changed selectPost to showAllReplies
 		
 		setupButton(button_UnreadOnly, "Dialog", 13, 110, Pos.CENTER, 150, 620);
-		button_UnreadOnly.setOnAction((_) -> ControllerMyView.refreshReplyListUnreadOnly(currentPostId));
+		button_UnreadOnly.setOnAction((_) -> ControllerMyView.showUnreadReplies()); // changed doNothing to showUnreadReplies
 		
 		setupButton(button_Search, "Dialog", 13, 110, Pos.CENTER, 660, 393);
-		button_Search.setOnAction((_) -> {
-			selection = (toggle_PostType.getSelectedToggle() == radio_User) ? true : false;
-			ControllerMyView.filterByKeyword(currentPostId, selection, text_Filter.getText());
-		});
+		button_Search.setOnAction((_) -> ControllerMyView.performFilterReplies()); // changed doNothing to performFilterReplies
 
 		// Add all widgets to the pane
 		theRootPane.getChildren().addAll(
@@ -303,11 +287,6 @@ public class ViewMyView {
 	Helper methods
 
 	**********************************************************************************************/
-	
-	public void refreshLabels() {
-		label_numReplies.setText("Number of replies: " + numReplies);
-		label_ReadVsUndreadReplies.setText("Read Replies: " + readReplies + " New Replies: " + newReplies);
-	}
 
 	/*******
 	 * <p> Method: setupLabel </p>

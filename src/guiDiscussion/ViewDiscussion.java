@@ -59,6 +59,12 @@ public class ViewDiscussion {
 	static Label  label_UserDetails   = new Label();
 	static Button button_AccountUpdate = new Button("Account Update");
 	static Line   line_Sep1 = new Line(20, 70, width - 20, 70);
+	
+	// XX
+	static TextField text_Search = new TextField();
+	static ComboBox<String> combobox_SearchCategory = new ComboBox<>();
+	static Button button_Search = new Button("Search");
+	// XX
 
 
 	/*-*******************************************************************************************
@@ -212,7 +218,25 @@ public class ViewDiscussion {
 		setupButton(button_myView, "Dialog", 12, 145, Pos.CENTER, 465, 37);
 		button_myView.setOnAction((_) -> 
 		{ guiMyView.ViewMyView.displayMyView(theStage, theUser); });
+		
+		
+		// XX
+		// Main Discussion Board Search Bar
+		setupText(text_Search, "Arial", 12, 120, Pos.BASELINE_LEFT, 150, 37);
+		text_Search.setPromptText("Keyword...");
+		
+		combobox_SearchCategory.setStyle("-fx-font: 12 Arial;");
+		combobox_SearchCategory.setMinWidth(80);
+		combobox_SearchCategory.setLayoutX(280);
+		combobox_SearchCategory.setLayoutY(37);
+		combobox_SearchCategory.setItems(javafx.collections.FXCollections.observableArrayList("All", "Posts", "Replies"));
+		combobox_SearchCategory.getSelectionModel().select(0);
+		
+		setupButton(button_Search, "Dialog", 12, 80, Pos.CENTER, 370, 37);
+		button_Search.setOnAction((_) -> ControllerDiscussion.performSearch());
+		// XX
 
+		
 		// ── Post input (y 80–180) ─────────────────────────────────────────────────
 		setupLabel(label_PostSection, "Arial", 13, 100, Pos.BASELINE_LEFT, 20, 82);
 
@@ -307,7 +331,7 @@ public class ViewDiscussion {
 
 		// Add all widgets to the pane
 		theRootPane.getChildren().addAll(
-			label_PageTitle, label_UserDetails, button_AccountUpdate, line_Sep1,button_myView, 
+			label_PageTitle, label_UserDetails, button_AccountUpdate, line_Sep1, 
 			label_PostSection,
 			label_Author, text_Author,
 			label_Title,  text_Title,
@@ -323,7 +347,12 @@ public class ViewDiscussion {
 			button_CreateReply, button_UpdateReply, button_DeleteReply,
 			listView_Replies,
 			line_Sep3,
-			label_ErrorMessage, button_Back
+			label_ErrorMessage,
+			button_Back,						// syntax error and duplicate child fix
+			button_myView,						// XX
+			text_Search,
+			combobox_SearchCategory,
+			button_Search						// XX
 		);
 
 		// Ensure discussion tables exist
@@ -333,9 +362,23 @@ public class ViewDiscussion {
 	public static void set_reset(boolean c){
 		reset = c;
 		
-		if(reset) {
-			theRootPane.getChildren().add(button_reset_filter);
-		}
+		// XX old if 
+		//if(reset) {
+		//	theRootPane.getChildren().add(button_reset_filter);
+		//}
+		
+		// XX new if
+		//if(reset) {
+		//	if (!theRootPane.getChildren().contains(button_reset_filter)) {
+		//		theRootPane.getChildren().add(button_reset_filter);
+		//	}
+		//}
+		
+		if(reset && !theRootPane.getChildren().contains(button_reset_filter)) {
+            theRootPane.getChildren().add(button_reset_filter);
+        }
+		
+		// XX
 		else {
 			theRootPane.getChildren().remove(button_reset_filter);
 		}
