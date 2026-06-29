@@ -360,13 +360,28 @@ public class ViewDiscussion {
 	}
 	
 	public static void set_reset(boolean c){
+		reset = c;
 		
-		if (!c) {
+		// XX old if 
+		//if(reset) {
+		//	theRootPane.getChildren().add(button_reset_filter);
+		//}
+		
+		// XX new if
+		//if(reset) {
+		//	if (!theRootPane.getChildren().contains(button_reset_filter)) {
+		//		theRootPane.getChildren().add(button_reset_filter);
+		//	}
+		//}
+		
+		if(reset && !theRootPane.getChildren().contains(button_reset_filter)) {
+            theRootPane.getChildren().add(button_reset_filter);
+        }
+		
+		// XX
+		else {
 			theRootPane.getChildren().remove(button_reset_filter);
-		} else if (c && !theRootPane.getChildren().contains(button_reset_filter)) {
-			theRootPane.getChildren().add(button_reset_filter);
 		}
-		
 	}
 
 
