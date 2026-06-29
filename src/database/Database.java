@@ -21,7 +21,6 @@ import entityClasses.DiscussionReply;
 import entityClasses.ImageComment;
 import entityClasses.ImagePost;
 import entityClasses.User;
-import guiMyView.ViewMyView;
 import javafx.scene.image.Image;
 
 /*******
@@ -101,7 +100,7 @@ public class Database {
 			connection = DriverManager.getConnection(DB_URL, USER, PASS);
 			statement = connection.createStatement(); 
 			// You can use this command to clear the database and restart from fresh.
-			// statement.execute("DROP ALL OBJECTS");
+//			statement.execute("DROP ALL OBJECTS");
 
 			createTables();  // Create the necessary tables if they don't exist
 		} catch (ClassNotFoundException e) {
@@ -1802,65 +1801,98 @@ public class Database {
 	        e.printStackTrace();
 	    }
 	}
-
-
-
-	public void updateRead(int replyId) {
-		if (!unreadReply(replyId)) {
-		
-		    String sql = "UPDATE replies SET read = TRUE WHERE id = ?";
-		    try (PreparedStatement ps = connection.prepareStatement(sql)) {
-	//	        ps.setBoolean(1, true);
-		        ps.setInt(1, replyId);
-		        ps.executeUpdate();
-		        ViewMyView.readReplies++;
-		        ViewMyView.newReplies = ViewMyView.numReplies - ViewMyView.readReplies;
-		    } catch (SQLException e) {
-		        e.printStackTrace();
-		    }
-		}
-	}
 	
-	public boolean unreadReply(int replyId) {
-		String sql = "SELECT read FROM replies WHERE id = ?";
-	    boolean isRead = false;
+	
+	// XX - New methods for search functionality 
+	
+	
+	/*******
+	 * <p> Method: searchPosts </p>
+	 * 
+	 * <p> Description: Search for posts matching a keyword </p>
+	 */
+	public List<DiscussionPost> searchPosts(String keyword) {
+	    List<DiscussionPost> list = new ArrayList<>();
+	    String sql = "SELECT id, author, title, body, post_type, image_filename, image_data, tags, created_at FROM posts WHERE LOWER(title) LIKE ? OR LOWER(body) LIKE ? OR LOWER(author) LIKE ? OR LOWER(tags) LIKE ? ORDER BY created_at DESC";
 	    
-	    try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-	        pstmt.setInt(1, replyId); 
+	    try (PreparedStatement ps = connection.prepareStatement(sql)) {
 	        
-	        try (ResultSet rs = pstmt.executeQuery()) {
-	            if (rs.next()) {
-	            	isRead = rs.getBoolean("read");
+	    	String search = "%" + keyword.toLowerCase() + "%";
+	        
+	    	ps.setString(1, search); ps.setString(2, search); ps.setString(3, search); ps.setString(4, search);
+	        
+	    	try (ResultSet rs = ps.executeQuery()) {
+	            while (rs.next()) {
+	                Blob blob = rs.getBlob("image_data");
+	                Image img = (blob != null) ? new Image(blob.getBinaryStream()) : null;
+	                list.add(new DiscussionPost(rs.getInt("id"), rs.getString("author"), rs.getString("title"), rs.getString("body"), rs.getString("post_type"), rs.getString("image_filename"), img, rs.getString("created_at"), rs.getString("tags")));
 	            }
 	        }
-	    } catch (SQLException e) {
-	        e.printStackTrace();
-	    }
-	    
-	    return isRead;
-
+	    } catch (SQLException e) { e.printStackTrace(); }
+	    return list;
 	}
-	
-	public String getFilter(int replyId, boolean KeyType) {
-		String keySelection = (KeyType) ? "author" : "body";
-		String toReturn ="";
-		
-		String sql = "SELECT ? FROM replies WHERE id = ?";
+
+	/*******
+	 * <p> Method: searchReplies </p>
+	 * 
+	 * <p> Description: Search through replies across the board matching a keyword </p>
+	 */
+	public List<DiscussionReply> searchReplies(String keyword) {
+	    List<DiscussionReply> list = new ArrayList<>();
+	    String sql = "SELECT id, post_id, author, body, created_at, read FROM replies WHERE LOWER(body) LIKE ? OR LOWER(author) LIKE ? ORDER BY created_at ASC";
 	    
-	    try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-	    	pstmt.setString(1, keySelection);
-	    	pstmt.setInt(2, replyId); 
+	    try (PreparedStatement ps = connection.prepareStatement(sql)) {
 	        
-	        try (ResultSet rs = pstmt.executeQuery()) {
-	            if (rs.next()) {
-	            	toReturn = rs.getString(keySelection);
+	    	String search = "%" + keyword.toLowerCase() + "%";
+	        
+	        ps.setString(1, search); ps.setString(2, search);
+	        
+	        try (ResultSet rs = ps.executeQuery()) {
+	            while (rs.next()) {
+	                list.add(new DiscussionReply(rs.getInt("id"), rs.getInt("post_id"), rs.getString("author"), rs.getString("body"), rs.getString("created_at"), rs.getBoolean("read")));
 	            }
 	        }
-	    } catch (SQLException e) {
-	        e.printStackTrace();
-	    }
+	    } catch (SQLException e) { e.printStackTrace(); }
 	    
-	    return toReturn;
-
+	    return list;
 	}
+
+	/*******
+	 * <p> Method: getFilteredReplies </p>
+	 * 
+	 * <p> Description: Filter by user or keyword and read or unread </p>
+	 */
+	public List<DiscussionReply> getFilteredReplies(int postId, String keyword, boolean byUser, boolean unreadOnly) {
+	    List<DiscussionReply> list = new ArrayList<>();
+	    StringBuilder sql = new StringBuilder("SELECT id, post_id, author, body, created_at, read FROM replies WHERE post_id = ?");
+	    
+	    if (unreadOnly) {
+	    	sql.append(" AND read = FALSE");
+	    } 
+	    
+	    if (keyword != null && !keyword.trim().isEmpty()) {
+	        if (byUser) sql.append(" AND LOWER(author) LIKE ?");
+	        else sql.append(" AND LOWER(body) LIKE ?");
+	    }
+	    sql.append(" ORDER BY created_at ASC");
+	    
+	    try (PreparedStatement ps = connection.prepareStatement(sql.toString())) {
+	        ps.setInt(1, postId);
+	        if (keyword != null && !keyword.trim().isEmpty()) {
+	            ps.setString(2, "%" + keyword.toLowerCase().trim() + "%");
+	        }
+	        try (ResultSet rs = ps.executeQuery()) {
+	            while (rs.next()) {
+	                list.add(new DiscussionReply(rs.getInt("id"), rs.getInt("post_id"), rs.getString("author"), rs.getString("body"), rs.getString("created_at"), rs.getBoolean("read")));
+	            }
+	        }
+	    } catch (SQLException e) { e.printStackTrace(); }
+	    
+	    return list;
+	}
+	
+	
+	
+	// XX - end of new search methods 
+
 }
