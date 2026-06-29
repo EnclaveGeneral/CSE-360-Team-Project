@@ -40,7 +40,7 @@ public class ModelDiscussion {
 	 * @return an empty String if the title is valid, or an error message String if not
 	 *
 	 */
-	protected static String validateTitle(String title) {
+	public static String validateTitle(String title) {
 		if (title == null || title.isBlank())
 			return "Error: Post title cannot be empty.";
 		return "";
@@ -59,7 +59,7 @@ public class ModelDiscussion {
 	 * @return an empty String if the body is valid, or an error message String if not
 	 *
 	 */
-	protected static String validateBody(String body) {
+	public static String validateBody(String body) {
 		if (body == null || body.isBlank())
 			return "Error: Body cannot be empty.";
 		return "";
@@ -77,7 +77,7 @@ public class ModelDiscussion {
 	 * @return an empty String if the author is valid, or an error message String if not
 	 *
 	 */
-	protected static String validateAuthor(String author) {
+	public static String validateAuthor(String author) {
 		if (author == null || author.isBlank())
 			return "Error: Author cannot be empty.";
 		return "";
@@ -97,7 +97,7 @@ public class ModelDiscussion {
 	 * @return an empty String if a file was selected, or an error message String if not
 	 *
 	 */
-	protected static String validateImageFile(java.io.File file) {
+	public static String validateImageFile(java.io.File file) {
 		if (file == null)
 			return "Error: No image file selected.";
 		return "";

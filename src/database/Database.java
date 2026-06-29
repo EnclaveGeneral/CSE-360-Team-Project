@@ -23,6 +23,8 @@ import entityClasses.ImagePost;
 import entityClasses.User;
 import javafx.scene.image.Image;
 
+import guiMyView.ViewMyView;
+
 /*******
  * <p> Title: Database Class. </p>
  * 
@@ -1766,6 +1768,42 @@ public class Database {
 	    } catch (SQLException e) {
 	        e.printStackTrace();
 	    }
+	}
+	
+	public void updateRead(int replyId) {
+		if (!unreadReply(replyId)) {
+		
+		    String sql = "UPDATE replies SET read = TRUE WHERE id = ?";
+		    try (PreparedStatement ps = connection.prepareStatement(sql)) {
+	//	        ps.setBoolean(1, true);
+		        ps.setInt(1, replyId);
+		        ps.executeUpdate();
+		        ViewMyView.readReplies++;
+		        ViewMyView.newReplies = ViewMyView.numReplies - ViewMyView.readReplies;
+		    } catch (SQLException e) {
+		        e.printStackTrace();
+		    }
+		}
+	}
+
+	public boolean unreadReply(int replyId) {
+		String sql = "SELECT read FROM replies WHERE id = ?";
+	    boolean isRead = false;
+	    
+	    try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+	        pstmt.setInt(1, replyId); 
+	        
+	        try (ResultSet rs = pstmt.executeQuery()) {
+	            if (rs.next()) {
+	            	isRead = rs.getBoolean("read");
+	            }
+	        }
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    }
+	    
+	    return isRead;
+
 	}
 
 	/*******

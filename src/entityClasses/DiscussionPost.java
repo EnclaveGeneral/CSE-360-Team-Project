@@ -69,7 +69,7 @@ public class DiscussionPost {
 		this.imageFilename = imageFilename;
 		this.image         = image;
 		this.createdAt     = createdAt;
-		this.tags = tags;
+		this.tags   = tags;
 	}
 
 
@@ -87,6 +87,7 @@ public class DiscussionPost {
 	
 	/** @return the tags */
 	public String  getTags()          { return tags; }
+
 
 	/** @return "text" or "image" */
 	public String  getPostType()      { return postType; }
