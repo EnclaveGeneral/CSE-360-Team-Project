@@ -192,8 +192,7 @@ public class ViewClassRoster {
 		button_Back.setOnAction((_) -> {ControllerClassRoster.performBack(); });
 		
 		setupButton(button_ShowAll, "Dialog", 13, 110, Pos.CENTER, 20, 665);
-		button_ShowAll.setOnAction((_) -> {
-			});
+		button_ShowAll.setOnAction((_) -> {});
 		
 //		setupButton(button_UnreadOnly, "Dialog", 13, 110, Pos.CENTER, 150, 665);
 //		button_UnreadOnly.setOnAction((_) -> {});

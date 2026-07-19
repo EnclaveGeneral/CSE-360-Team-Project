@@ -347,7 +347,7 @@ public class ControllerClassRoster {
 	        flag1.setPrefWidth(100);
 	        
 	        
-	        temp = getFlag(student, 0)  ? "Pass" : "Fail";
+	        temp = getFlag(student, 0)  ? "CRITICAL" : "safe";
 	        Label flag2 = new Label(temp);
 	        flag2.setPrefWidth(100);
 
