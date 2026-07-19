@@ -8,6 +8,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.*;
 import javafx.embed.swing.SwingFXUtils;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -22,6 +23,9 @@ import entityClasses.ImageComment;
 import entityClasses.ImagePost;
 import entityClasses.User;
 import javafx.scene.image.Image;
+
+import guiMyView.ViewMyView;
+import guiClassRoster.ControllerClassRoster;
 
 /*******
  * <p> Title: Database Class. </p>
@@ -100,7 +104,7 @@ public class Database {
 			connection = DriverManager.getConnection(DB_URL, USER, PASS);
 			statement = connection.createStatement(); 
 			// You can use this command to clear the database and restart from fresh.
-			// statement.execute("DROP ALL OBJECTS");
+//			statement.execute("DROP ALL OBJECTS");
 
 			createTables();  // Create the necessary tables if they don't exist
 		} catch (ClassNotFoundException e) {
@@ -247,7 +251,6 @@ public class Database {
  */
 	public List<String> getUserList () {
 		List<String> userList = new ArrayList<String>();
-		userList.add("<Select a User>");
 		String query = "SELECT userName FROM userDB";
 		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
 			ResultSet rs = pstmt.executeQuery();
@@ -1767,6 +1770,42 @@ public class Database {
 	        e.printStackTrace();
 	    }
 	}
+	
+	public void updateRead(int replyId) {
+		if (!unreadReply(replyId)) {
+		
+		    String sql = "UPDATE replies SET read = TRUE WHERE id = ?";
+		    try (PreparedStatement ps = connection.prepareStatement(sql)) {
+	//	        ps.setBoolean(1, true);
+		        ps.setInt(1, replyId);
+		        ps.executeUpdate();
+		        ViewMyView.readReplies++;
+		        ViewMyView.newReplies = ViewMyView.numReplies - ViewMyView.readReplies;
+		    } catch (SQLException e) {
+		        e.printStackTrace();
+		    }
+		}
+	}
+
+	public boolean unreadReply(int replyId) {
+		String sql = "SELECT read FROM replies WHERE id = ?";
+	    boolean isRead = false;
+	    
+	    try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+	        pstmt.setInt(1, replyId); 
+	        
+	        try (ResultSet rs = pstmt.executeQuery()) {
+	            if (rs.next()) {
+	            	isRead = rs.getBoolean("read");
+	            }
+	        }
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    }
+	    
+	    return isRead;
+
+	}
 
 	/*******
 	 * <p> Method: deleteReply </p>
@@ -1893,6 +1932,62 @@ public class Database {
 	
 	
 	
-	// XX - end of new search methods 
+	// XX - end of new search methods
+	
+	
+	public Map<String, List<String>> getClassRoster() {
+	    Map<String, List<String>> list = new TreeMap<>();
+	    
+	    
+	    //build list
+	    ControllerClassRoster con = new ControllerClassRoster();
+	    con.build(list);
+	    
+	    
+	    // outer loop with Posts sql
+	    String postSQL = "SELECT id, author FROM posts";
+	    try (PreparedStatement ps = connection.prepareStatement(postSQL)) {
+	        try (ResultSet rs = ps.executeQuery()) {
+	            while (rs.next()) {
+	            	//check to see if rs (posting user) is inside the class list.
+	            	if (list.containsKey(rs.getString("author"))) {
+	            	
+		            	// Inner loop with replies sql,
+		            	String replySQL = "SELECT post_id, author FROM replies";
+		        	    try (PreparedStatement ps2 = connection.prepareStatement(replySQL)) {
+		        	        try (ResultSet rs2 = ps2.executeQuery()) {
+		        	            while (rs2.next()) {
+		        	            	
+		        	            	// Compare postSQL ID with replySQL post_ID && the authors don't match.
+		        	            	if (rs.getInt("id") == rs2.getInt("post_id") && !rs.getString("author").equals(rs2.getString("author"))) {
+		        	            		
+		        	            		// checks to see if the responder, is in class list.
+		        	            		if(list.containsKey(rs2.getString("author")) && 
+		        	            				!list.get(rs2.getString("author")).contains(rs.getString("author"))) {
+		        	            			
+		        	            			// ensure that the 
+		        	            			list.get(rs2.getString("author")).add((rs.getString("author")));
+		        	            
+		        	            		}
+		        	            		
+		        	            	}
+		        	            	
+		        	            }
+		        	        }
+	        	        }
+	            	}
+	        	    
+	        	    // Exit Loop
+	
+	            }
+	        }
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    }
+	    return list;
+	}
+	
+	// Note : Need id from posts to match post_ID from replies
+	
 
 }

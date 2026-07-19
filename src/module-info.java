@@ -1,3 +1,10 @@
+/*******
+ * <p> Title: FoundationsF26 </p>
+ *
+ * <p> Description: Module-info folder that ties the libraries together</p>
+ *
+*/
+
 module FoundationsF26 {
     requires javafx.controls;
     requires java.sql;

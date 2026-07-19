@@ -5,4 +5,4 @@
  *
 */
 
-package guiMyView;
+package guiClassRoster;

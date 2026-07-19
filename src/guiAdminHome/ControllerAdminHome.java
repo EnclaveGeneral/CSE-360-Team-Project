@@ -142,6 +142,10 @@ public class ControllerAdminHome {
 		guiDiscussion.ViewDiscussion.displayDiscussion(ViewAdminHome.theStage, ViewAdminHome.theUser);
 	}
 	
+	protected static void classRoster() {
+		guiClassRoster.ViewClassRoster.displayClassRoster(ViewAdminHome.theStage, ViewAdminHome.theUser);
+	}
+	
 	/**********
 	 * <p> 
 	 * 

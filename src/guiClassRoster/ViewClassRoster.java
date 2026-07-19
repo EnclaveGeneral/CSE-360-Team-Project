@@ -1,4 +1,4 @@
-package guiMyView;
+package guiClassRoster;
 
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -26,10 +26,10 @@ import applicationMain.FoundationsMain;
  *
  * @author Omid Kadkhodaei
  *
- * @version 1.00	2026-06-25	For the express purpose of Team project 2.
+ * @version 1.00	2026-07-19	For the express purpose of Team project 3.
 
  */
-public class ViewMyView {
+public class ViewClassRoster {
 
 	/*-*******************************************************************************************
 
@@ -37,8 +37,8 @@ public class ViewMyView {
 
 	**********************************************************************************************/
 
-	private static ViewMyView theView = null;
-	private static Scene theMyView;
+	private static ViewClassRoster theView = null;
+	private static Scene theRoster;
 	private static Pane  theRootPane;
 
 	static Stage              theStage;
@@ -82,7 +82,7 @@ public class ViewMyView {
 
 	**********************************************************************************************/
 
-	static Label  label_PageTitle     = new Label("Welcome to MyView");
+	static Label  label_PageTitle     = new Label("Class Roster");
 	static Label  label_UserDetails   = new Label();
 	static Line   line_Sep1 = new Line(20, 70, width - 20, 70);
 
@@ -93,25 +93,6 @@ public class ViewMyView {
 
 	**********************************************************************************************/
 
-	static Label label_PostSection = new Label("Posts");
-
-	// Shared author field used by both posts and replies
-	static Label     label_numPosts = new Label("Number of Posts: " + numPosts);
-	
-
-	// Toggle: USER vs KEYWORD
-	static ToggleGroup toggle_PostType = new ToggleGroup();
-	static RadioButton radio_User      = new RadioButton("User");
-	static RadioButton radio_Keyword     = new RadioButton("Keyword");
-
-	// Text body — shown when TEXT is selected
-	static Label     label_Body = new Label("Body:");
-	static TextField text_Filter  = new TextField();
-
-
-	static Line line_Sep2 = new Line(20, 358, width - 20, 358);
-
-
 	/*-*******************************************************************************************
 
 	GUI Widgets — Post List
@@ -121,21 +102,7 @@ public class ViewMyView {
 	static ListView<HBox> listView_Posts = new ListView<>();
 
 
-	/*-*******************************************************************************************
-
-	GUI Widgets — Reply Area
-
-	**********************************************************************************************/
-
-	static Label 	 label_ReplySection = new Label("Replies");
-	static Label     label_numReplies = new Label("Number of replies: " + numReplies);
-	static Label 	 label_ReadVsUndreadReplies = new Label("Read Replies: " + readReplies + " New Replies: " + newReplies);
-	static Label 	 label_Filter = new Label("Filter by:");
-
-
-	static ListView<String> listView_Replies = new ListView<>();
-
-	static Line line_Sep3 = new Line(20, 655, width - 20, 655);
+	static Line line_Sep2 = new Line(20, 655, width - 20, 655);
 
 
 	/*-*******************************************************************************************
@@ -147,8 +114,7 @@ public class ViewMyView {
 //	static Label  label_ErrorMessage = new Label("");
 	static Button button_Back       	= new Button("Back");
 	static Button button_ShowAll        = new Button("Show all");
-	static Button button_UnreadOnly     = new Button("Show unread");
-	static Button button_Search         = new Button("Search");
+//	static Button button_UnreadOnly     = new Button("Show unread");
 
 
 	/*-*******************************************************************************************
@@ -168,20 +134,20 @@ public class ViewMyView {
 	 * @param user is the currently logged-in User whose username is displayed in the header.
 	 *
 	 */
-	public static void displayMyView(Stage ps, entityClasses.User user) {
+	public static void displayClassRoster(Stage ps, entityClasses.User user) {
 		theStage = ps;
 		theUser  = user;
 
-		if (theView == null) theView = new ViewMyView();
+		if (theView == null) theView = new ViewClassRoster();
 
 		label_UserDetails.setText("User: " + theUser.getUserName());
 //		label_ErrorMessage.setText("");
 
-		theStage.setTitle("CSE 360: MyView");
-		theStage.setScene(theMyView);
+		theStage.setTitle("CSE 360: Class Roster");
+		theStage.setScene(theRoster);
 		theStage.show();
 
-		ControllerMyView.refreshPostList();
+		ControllerClassRoster.refreshPostList();
 	}
 
 
@@ -199,96 +165,46 @@ public class ViewMyView {
 	 * GUI widget. This method is only called once due to the Singleton design pattern. </p>
 	 *
 	 */
-	private ViewMyView() {
+	private ViewClassRoster() {
 
 		theRootPane        = new Pane();
-		theMyView = new Scene(theRootPane, width, height);
-		theMyView.getStylesheets().add(
-			ViewMyView.class.getResource("/dark-theme.css").toExternalForm());
+		theRoster = new Scene(theRootPane, width, height);
+		theRoster.getStylesheets().add(
+			ViewClassRoster.class.getResource("/dark-theme.css").toExternalForm());
 
 		// ── Header (y 8–70) ──────────────────────────────────────────────────────
 		setupLabel(label_PageTitle,     "Arial", 22, width, Pos.CENTER,        0,  10);
 		setupLabel(label_UserDetails,   "Arial", 18, 500,   Pos.BASELINE_LEFT, 20, 44);
-		
 
-		// ── Post input (y 80–180) ─────────────────────────────────────────────────
-		setupLabel(label_PostSection, "Arial", 13, 100, Pos.BASELINE_LEFT, 20, 82);
-
-		// Author and Title on the same row
-		setupLabel(label_numPosts, "Arial", 13, 50,  Pos.BASELINE_LEFT, 20,  108);
-
-
-		// Text body (default visible)
-		setupLabel(label_Body, "Arial", 13, 30,  Pos.BASELINE_LEFT, 20,  158);
-		setupText (text_Filter,  "Arial", 13, 275, Pos.BASELINE_LEFT, 500,  426);
 
 
 		// ── Post list (y 215–358) ─────────────────────────────────────────────────
 		listView_Posts.setLayoutX(20);
-		listView_Posts.setLayoutY(130);
+		listView_Posts.setLayoutY(80);
 		listView_Posts.setPrefWidth(760);
-		listView_Posts.setPrefHeight(220);
+		listView_Posts.setPrefHeight(560);
 		listView_Posts.setOnMouseClicked((_) -> {
-			ControllerMyView.selectPost();
-			refreshLabels();
+			ControllerClassRoster.selectPost();
 			});
 
 		// ── Reply input (y 370–470) ───────────────────────────────────────────────
-		setupLabel(label_ReplySection, "Arial", 13, 100, Pos.BASELINE_LEFT, 20, 372);
-		setupLabel(label_numReplies, "Arial", 13, 30,  Pos.BASELINE_LEFT, 20,  398);
-		setupLabel (label_ReadVsUndreadReplies,  "Arial", 13, 605, Pos.BASELINE_LEFT, 20,  426);
-		setupLabel(label_Filter, "Arial", 13, 100, Pos.BASELINE_LEFT, 500, 372);
-		
-		// USER / KEYWORD toggle
-		radio_User.setToggleGroup(toggle_PostType);
-		radio_Keyword.setToggleGroup(toggle_PostType);
-		radio_User.setSelected(true);
-		radio_User.setLayoutX(500);  radio_User.setLayoutY(398);
-		radio_Keyword.setLayoutX(562); radio_Keyword.setLayoutY(398);
-
-
-		// ── Reply list (y 458–615) ────────────────────────────────────────────────
-		listView_Replies.setLayoutX(20);
-		listView_Replies.setLayoutY(458);
-		listView_Replies.setPrefWidth(760);
-		listView_Replies.setPrefHeight(150);
-		listView_Replies.setOnMouseClicked(event -> {
-			ControllerMyView.selectReply();
-			refreshLabels();
-			});
-
-		// ── Status + navigation (y 623–710) ──────────────────────────────────────
 		setupButton(button_Back, "Dialog", 13, 110, Pos.CENTER, 660, 665);
-		button_Back.setOnAction((_) -> {ControllerMyView.performBack(); });
+		button_Back.setOnAction((_) -> {ControllerClassRoster.performBack(); });
 		
-		setupButton(button_ShowAll, "Dialog", 13, 110, Pos.CENTER, 20, 620);
+		setupButton(button_ShowAll, "Dialog", 13, 110, Pos.CENTER, 20, 665);
 		button_ShowAll.setOnAction((_) -> {
-			ControllerMyView.refreshReplyList(currentPostId);
-			refreshLabels();
 			});
 		
-		setupButton(button_UnreadOnly, "Dialog", 13, 110, Pos.CENTER, 150, 620);
-		button_UnreadOnly.setOnAction((_) -> ControllerMyView.refreshReplyListUnreadOnly(currentPostId));
-		
-		setupButton(button_Search, "Dialog", 13, 110, Pos.CENTER, 660, 393);
-		button_Search.setOnAction((_) -> {
-			selection = (toggle_PostType.getSelectedToggle() == radio_User) ? true : false;
-			ControllerMyView.filterByKeyword(currentPostId, selection, text_Filter.getText());
-		});
+//		setupButton(button_UnreadOnly, "Dialog", 13, 110, Pos.CENTER, 150, 665);
+//		button_UnreadOnly.setOnAction((_) -> {});
 
 		// Add all widgets to the pane
 		theRootPane.getChildren().addAll(
 			label_PageTitle, label_UserDetails, line_Sep1,
-			label_PostSection, label_numPosts, label_numReplies,
-			radio_User, radio_Keyword,
-			text_Filter,
 			listView_Posts,
 			line_Sep2,
-			label_ReplySection, label_ReadVsUndreadReplies, listView_Replies,
-			label_Filter,
-			line_Sep3,
 			button_Back,
-			button_ShowAll, button_UnreadOnly, button_Search
+			button_ShowAll
 		);
 
 		// Ensure discussion tables exist
@@ -303,17 +219,6 @@ public class ViewMyView {
 
 	**********************************************************************************************/
 	
-	
-	/*******
-	 * <p> Method: refreshLabels </p>
-	 *
-	 * <p> Description: Public local method to refresh the standard fields for a Label. </p>
-
-	 */
-	public void refreshLabels() {
-		label_numReplies.setText("Number of replies: " + numReplies);
-		label_ReadVsUndreadReplies.setText("Read Replies: " + readReplies + " New Replies: " + newReplies);
-	}
 
 	/*******
 	 * <p> Method: setupLabel </p>
