@@ -1,5 +1,8 @@
 package applicationMain;
 	
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.sql.SQLException;
 import database.Database;
 import javafx.application.Application;
@@ -75,12 +78,20 @@ public class FoundationsMain extends Application {
 	// application so we do not need to keep passing the reference in parameters to the rest of the
 	// system for other methods that need it can access it.
 	public static Database database = new Database();
+	public static String password;
     private Alert databaseInUse = new Alert(AlertType.INFORMATION);
 
 	public static int activeHomePage = 0;		// Which role's home page is currently active?
 												// Role 0 is the admin role number
 	@Override
 	public void start(Stage theStage) {
+		try {
+            password = new String(Files.readAllBytes(Paths.get("src/password.txt"))).trim();
+        } 
+		catch (IOException e) {
+            e.printStackTrace();
+            
+        }
 		
 		// Connect to the in-memory database
 		try {
