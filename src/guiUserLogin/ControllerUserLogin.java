@@ -1,6 +1,11 @@
 package guiUserLogin;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+
 import database.Database;
+import database.encrypt;
 import userNameRecognizer.UserNameRecognizer;
 import entityClasses.User;
 import javafx.stage.Stage;
@@ -30,7 +35,9 @@ import javafx.stage.Stage;
  */
 
 public class ControllerUserLogin {
-	
+	private static Database theDatabase = applicationMain.FoundationsMain.database;
+	private static encrypt encrypt = new encrypt(applicationMain.FoundationsMain.password, 3);
+	private static Stage theStage;	
 	/*-********************************************************************************************
 
 	The User Interface Actions for this page
@@ -45,12 +52,11 @@ public class ControllerUserLogin {
 	 * Default constructor is not used.
 	 */
 	public ControllerUserLogin() {
+	
 	}
 
 	// Reference for the in-memory database so this package has access
-	private static Database theDatabase = applicationMain.FoundationsMain.database;
-
-	private static Stage theStage;	
+	
 	
 	/**********
 	 * <p> Method: public doLogin() </p>
@@ -91,8 +97,9 @@ public class ControllerUserLogin {
 		
 		// Check to see that the login password matches the account password
     	String actualPassword = theDatabase.getCurrentPassword();
+    	actualPassword = encrypt.decrypt_data(actualPassword, applicationMain.FoundationsMain.password);
     	
-    	if (password.compareTo(actualPassword) != 0) {
+    	if (!password.equals(actualPassword)) {
     	    // Password doesn't match the real password — check if it's a one-time password
     	    if (theDatabase.isOnetimePassword(username, password)) {
     	        theDatabase.clearOnetimePassword(username);
@@ -123,8 +130,10 @@ public class ControllerUserLogin {
 			
 			// Admin role
 			if (user.getAdminRole()) {
+				//System.out.println("here");
 				loginResult = theDatabase.loginAdmin(user);
 				if (loginResult) {
+					//System.out.println("here");
 					guiAdminHome.ViewAdminHome.displayAdminHome(theStage, user);
 				}
 			} else if (user.getNewRole1()) {
