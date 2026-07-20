@@ -47,7 +47,8 @@ public class ControllerDiscussion {
 
 	// -1 means nothing selected
 	private static int selectedPostId  = -1;
-	private static int selectedReplyId = -1;
+	private static int selectedReplyId = -1; 
+	private static boolean read_only = false;
 
 	// Holds the image file chosen via FileChooser until Create Post is pressed
 	private static java.io.File pendingImageFile = null;
@@ -280,6 +281,10 @@ public class ControllerDiscussion {
 	 *
 	 */
 	protected static void performCreatePost() {
+		if(read_only) {
+			System.out.println("turn read only off");
+			return;
+		}
 		String author = ViewDiscussion.text_Author.getText().trim();
 		String title  = ViewDiscussion.text_Title.getText().trim();
 		String tags = ViewDiscussion.text_tags.getText().trim();
@@ -332,6 +337,10 @@ public class ControllerDiscussion {
 	 *
 	 */
 	protected static void performUpdatePost() {
+		if(read_only) {
+			System.out.println("turn read only off");
+			return;
+		}
 		if (selectedPostId == -1) { setError("Please select a post to update."); return; }
 
 		// Guard: do not allow updating image posts
@@ -370,6 +379,10 @@ public class ControllerDiscussion {
 	 *
 	 */
 	protected static void performDeletePost() {
+		if(read_only) {
+			System.out.println("turn read only off");
+			return;
+		}
 		if (selectedPostId == -1) { setError("Please select a post to delete."); return; }
 		
 		// confirmation
@@ -413,6 +426,10 @@ public class ControllerDiscussion {
 	 *
 	 */
 	protected static void performCreateReply() {
+		if(read_only) {
+			System.out.println("turn read only off");
+			return;
+		}
 		if (selectedPostId == -1) { setError("Please select a post to reply to."); return; }
 
 		String author  = ViewDiscussion.text_Author.getText().trim();
@@ -431,6 +448,34 @@ public class ControllerDiscussion {
 		setSuccess("Reply created successfully!");
 		refreshReplyList(selectedPostId);
 	}
+	
+	/*******
+     * <p> Method: resetReadFlag() </p>
+     *
+     * <p> Description: reset the read flag. </p>
+     *
+     */
+    public static void resetReadFlag() {
+            read_only = false;
+    }
+    
+    /*******
+     * <p> Method: performRead() </p>
+     *
+     * <p> Description: Negates the read. </p>
+     *
+     */
+    public static void performRead() {
+            if(read_only) {
+                    read_only = false;
+                    
+            }
+            else {
+                    read_only = true;
+            }
+            
+            System.out.println("read: " + read_only);
+    }
 
 
 	/*******
@@ -441,6 +486,10 @@ public class ControllerDiscussion {
 	 *
 	 */
 	protected static void performUpdateReply() {
+		if(read_only) {
+			System.out.println("turn read only off");
+			return;
+		}
 		if (selectedPostId  == -1) { setError("Please select a post first."); return; }
 		if (selectedReplyId == -1) { setError("Please select a reply to update."); return; }
 
@@ -463,6 +512,10 @@ public class ControllerDiscussion {
 	 *
 	 */
 	protected static void performDeleteReply() {
+		if(read_only) {
+			System.out.println("turn read only off");
+			return;
+		}
 		if (selectedPostId  == -1) { setError("Please select a post first."); return; }
 		if (selectedReplyId == -1) { setError("Please select a reply to delete."); return; }
 

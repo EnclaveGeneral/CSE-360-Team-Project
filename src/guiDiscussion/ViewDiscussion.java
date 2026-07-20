@@ -85,6 +85,8 @@ public class ViewDiscussion {
 	
 	static Label     label_Tags = new Label("Tags:");
 	static TextField text_tags  = new TextField();
+	static Button button_read = new Button("Read only");
+	static Label     label_read = new Label("read: off");
 
 	// Toggle: TEXT vs IMAGE
 	static ToggleGroup toggle_PostType = new ToggleGroup();
@@ -316,6 +318,14 @@ public class ViewDiscussion {
 		setupButton(button_DeleteReply, "Dialog", 12, 130, Pos.CENTER, 300, 425);
 		button_DeleteReply.setOnAction((_) -> ControllerDiscussion.performDeleteReply());
 
+		setupLabel(label_read,  "Arial", 12, 30,  Pos.BASELINE_LEFT, 580, 183);
+		setupButton(button_read, "Dialog", 12, 130, Pos.CENTER, 440, 183);
+		setupButton(button_read, "Dialog", 12, 130, Pos.CENTER, 440, 183);
+		button_read.setOnAction(event -> {
+		    ControllerDiscussion.performRead();
+		    update_label();
+		});
+		
 		// ── Reply list (y 458–615) ────────────────────────────────────────────────
 		listView_Replies.setLayoutX(20);
 		listView_Replies.setLayoutY(458);
@@ -352,11 +362,28 @@ public class ViewDiscussion {
 			button_myView,						// XX
 			text_Search,
 			combobox_SearchCategory,
-			button_Search						// XX
+			button_Search,						// XX
+			button_read,
+			label_read
 		);
 
 		// Ensure discussion tables exist
 		FoundationsMain.database.createDiscussionTables();
+	}
+	
+	/*******
+	 * <p> Method: update_label() </p>
+	 *
+	 * <p> Description: Negates the read on the read label. </p>
+	 *
+	 */
+	public void update_label() {
+	    if(label_read.getText().equals("read: off")) {
+	        label_read.setText("read: on");
+	    }
+	    else {
+	        label_read.setText("read: off");
+	    }
 	}
 	
 	public static void set_reset(boolean c){
