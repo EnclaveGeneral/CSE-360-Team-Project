@@ -3,6 +3,7 @@ package guiUserUpdate;
 import java.util.Optional;
 
 import database.Database;
+import database.encrypt;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
@@ -90,7 +91,9 @@ public class ViewUserUpdate {
 	private static Button button_UpdateLastName = new Button("Update Last Name");
 	private static Button button_UpdatePreferredFirstName = new Button("Update Preferred First Name");
 	private static Button button_UpdateEmailAddress = new Button("Update Email Address");
-
+	private static Button button_show_password = new Button("Show Password");
+	private static Button button_show_email = new Button("Show Email");
+	
 	// This button enables the user to finish working on this page and proceed to the user's home
 	// page determined by the user's role at the time of log in.
 	private static Button button_ProceedToUserHomePage = new Button("Proceed to the User Home Page");
@@ -99,11 +102,15 @@ public class ViewUserUpdate {
 	
 	// These are the set of pop-up dialog boxes that are used to enable the user to change the
 	// the values of the various account detail items.
+	private static TextInputDialog dialogUpdateUsername;
 	private static TextInputDialog dialogUpdateFirstName;
+	private static TextInputDialog dialogUpdatePassword;
 	private static TextInputDialog dialogUpdateMiddleName;
 	private static TextInputDialog dialogUpdateLastName;
 	private static TextInputDialog dialogUpdatePreferredFirstName;
 	private static TextInputDialog dialogUpdateEmailAddresss;
+	private static TextInputDialog dialog_sp;
+	private static TextInputDialog dialog_se;
 	
 	// These attributes are used to configure the page and populate it with this user's information
 	private static ViewUserUpdate theView;	// Used to determine if instantiation of the class
@@ -115,11 +122,15 @@ public class ViewUserUpdate {
 	private static Stage theStage;				// The Stage that JavaFX has established for us	
 	private static Pane theRootPane;			// The Pane that holds all the GUI widgets
 	private static User theUser;				// The current user of the application
-
+	
+	private static encrypt encrypt = new encrypt(applicationMain.FoundationsMain.password, 3);
 	public static Scene theUserUpdateScene = null;	// The Scene each invocation populates
 
 	private static Optional<String> result;		// The result from a pop-up dialog
-
+	private boolean email_shown = false;
+	private boolean password_shown = false;
+	private static Optional<String> result2;
+	
 	/*-********************************************************************************************
 
 	Constructors
@@ -163,32 +174,33 @@ public class ViewUserUpdate {
 		
 		// Set the dynamic aspects of the window based on the user logged in and the current state
 		// of the various account elements.
-		s = theUser.getUserName();
+		s = theDatabase.getCurrentUsername();
 		System.out.println("*** Fetching account data for user: " + s);
     	if (s == null || s.length() < 1)label_CurrentUsername.setText("<none>");
     	else label_CurrentUsername.setText(s);
 		
-		s = theUser.getPassword();
+		s = theDatabase.getCurrentPassword();
+		System.out.println("s: " + s);
     	if (s == null || s.length() < 1)label_CurrentPassword.setText("<none>");
     	else label_CurrentPassword.setText(s);
     	
-		s = theUser.getFirstName();
+		s = theDatabase.getFirstName(theDatabase.getCurrentUsername());
     	if (s == null || s.length() < 1)label_CurrentFirstName.setText("<none>");
     	else label_CurrentFirstName.setText(s);
        
-        s = theUser.getMiddleName();
+        s = theDatabase.getCurrentMiddleName();
     	if (s == null || s.length() < 1)label_CurrentMiddleName.setText("<none>");
     	else label_CurrentMiddleName.setText(s);
         
-        s = theUser.getLastName();
+        s = theDatabase.getCurrentLastName();
     	if (s == null || s.length() < 1)label_CurrentLastName.setText("<none>");
     	else label_CurrentLastName.setText(s);
         
-		s = theUser.getPreferredFirstName();
+		s = theDatabase.getCurrentPreferredFirstName();
     	if (s == null || s.length() < 1)label_CurrentPreferredFirstName.setText("<none>");
     	else label_CurrentPreferredFirstName.setText(s);
         
-		s = theUser.getEmailAddress();
+		s = theDatabase.getCurrentEmailAddress();
     	if (s == null || s.length() < 1)label_CurrentEmailAddress.setText("<none>");
     	else label_CurrentEmailAddress.setText(s);
 
@@ -223,13 +235,23 @@ public class ViewUserUpdate {
 		// Initialize the pop-up dialogs to an empty text filed.
 		dialogUpdateFirstName = new TextInputDialog("");
 		dialogUpdateMiddleName = new TextInputDialog("");
+		dialogUpdateUsername = new TextInputDialog("");
+		dialogUpdatePassword = new TextInputDialog("");
 		dialogUpdateLastName = new TextInputDialog("");
 		dialogUpdatePreferredFirstName = new TextInputDialog("");
 		dialogUpdateEmailAddresss = new TextInputDialog("");
+		dialog_sp = new TextInputDialog("");
+		dialog_se = new TextInputDialog("");
 
 		// Establish the label for each of the dialogs.
 		dialogUpdateFirstName.setTitle("Update First Name");
 		dialogUpdateFirstName.setHeaderText("Update your First Name");
+		
+		dialogUpdateUsername.setTitle("Update username");
+		dialogUpdateUsername.setHeaderText("Update your username");
+		
+		dialogUpdatePassword.setTitle("Update password");
+		dialogUpdatePassword.setHeaderText("Update your password");
 		
 		dialogUpdateMiddleName.setTitle("Update Middle Name");
 		dialogUpdateMiddleName.setHeaderText("Update your Middle Name");
@@ -242,6 +264,12 @@ public class ViewUserUpdate {
 		
 		dialogUpdateEmailAddresss.setTitle("Update Email Address");
 		dialogUpdateEmailAddresss.setHeaderText("Update your Email Address");
+		
+		dialog_sp.setTitle("insert password to decrypt data");
+		dialog_sp.setHeaderText("insert password to decrypt data");
+		
+		dialog_se.setTitle("insert password to decrypt data");
+		dialog_se.setHeaderText("insert password to decrypt data");
 
 		// Label theScene with the name of the startup screen, centered at the top of the pane
 		setupLabelUI(label_ApplicationTitle, "Arial", 28, width, Pos.CENTER, 0, 5);
@@ -256,11 +284,51 @@ public class ViewUserUpdate {
         setupLabelUI(label_Username, "Arial", 18, 190, Pos.BASELINE_RIGHT, 5, 100);
         setupLabelUI(label_CurrentUsername, "Arial", 18, 260, Pos.BASELINE_LEFT, 200, 100);
         setupButtonUI(button_UpdateUsername, "Dialog", 18, 275, Pos.CENTER, 500, 93);
-       
+        button_UpdateUsername.setOnAction((_) -> {
+            result = dialogUpdateUsername.showAndWait();
+            result.ifPresent(newUsername -> {
+                String oldUsername = theUser.getUserName();
+                theDatabase.updateUsername(oldUsername, newUsername);
+                theUser.setUserName(newUsername);  
+                theDatabase.getUserAccountDetails(newUsername);  
+                String username = theDatabase.getCurrentUsername();
+                label_CurrentUsername.setText(username);
+            });
+        });
+        
         // password
         setupLabelUI(label_Password, "Arial", 18, 190, Pos.BASELINE_RIGHT, 5, 150);
         setupLabelUI(label_CurrentPassword, "Arial", 18, 260, Pos.BASELINE_LEFT, 200, 150);
         setupButtonUI(button_UpdatePassword, "Dialog", 18, 275, Pos.CENTER, 500, 143);
+        button_UpdatePassword.setOnAction((_) -> {result = dialogUpdatePassword.showAndWait();
+			result.ifPresent(_ -> theDatabase.updatePassword(theUser.getUserName(), result.get()));
+			theDatabase.getUserAccountDetails(theUser.getUserName());
+		 	String pass = theDatabase.getCurrentPassword();
+		   	theUser.setFirstName(encrypt.decrypt_data(pass, applicationMain.FoundationsMain.password));
+		   	label_CurrentPassword.setText(pass);
+		 	});
+        
+        button_show_password.setOnAction(event -> {
+            theDatabase.getUserAccountDetails(theUser.getUserName());
+            String pass = theDatabase.getCurrentPassword();
+
+            if (password_shown) {
+                label_CurrentPassword.setText(pass);
+                password_shown = false;
+            } 
+            else {
+                result = dialog_sp.showAndWait();
+                result.ifPresent(input -> {
+                    if (encrypt.check_password(input)) {
+                        label_CurrentPassword.setText(encrypt.decrypt_data(pass, input));
+                        password_shown = true;
+                    } 
+                    else {
+                        System.out.println("wrong password");
+                    }
+                });
+            }
+        });
         
         // First Name
         setupLabelUI(label_FirstName, "Arial", 18, 190, Pos.BASELINE_RIGHT, 5, 200);
@@ -343,16 +411,42 @@ public class ViewUserUpdate {
             });
         });
         
+        button_show_email.setOnAction(event -> {
+            theDatabase.getUserAccountDetails(theUser.getUserName());
+            String email = theDatabase.getCurrentEmailAddress();
+
+            if (email_shown) {
+                label_CurrentEmailAddress.setText(email);
+                email_shown = false;
+            } 
+            else {
+                result2 = dialog_sp.showAndWait(); 
+                result2.ifPresent(input -> {
+                    if (encrypt.check_password(input)) {
+                        label_CurrentEmailAddress.setText(encrypt.decrypt_data(email, input));
+                        email_shown = true;
+                    } 
+                    else {
+                        System.out.println("wrong password");
+                    }
+                });
+            }
+        });
+        
+        
         // Set up the button to proceed to this user's home page
         setupButtonUI(button_ProceedToUserHomePage, "Dialog", 18, 300, 
         		Pos.CENTER, width/2-150, 450);
         button_ProceedToUserHomePage.setOnAction((_) -> 
         	{ControllerUserUpdate.goToUserHomePage(theStage, theUser);});
+        setupButtonUI(button_show_password, "Dialog", 18, 275, Pos.CENTER, width/2, 500);
+        setupButtonUI(button_show_email, "Dialog", 18, 275, Pos.CENTER, width/2-300, 500);
+        
     	
         // Populate the Pane's list of children widgets
         theRootPane.getChildren().addAll(
         		label_ApplicationTitle, label_Purpose, label_Username,
-        		label_CurrentUsername, 
+        		label_CurrentUsername, button_UpdateUsername,
         		label_Password, label_CurrentPassword, 
         		button_UpdatePassword, 
         		label_FirstName, label_CurrentFirstName, button_UpdateFirstName,
@@ -361,7 +455,9 @@ public class ViewUserUpdate {
         		label_PreferredFirstName, label_CurrentPreferredFirstName,
         		button_UpdatePreferredFirstName, button_UpdateEmailAddress,
         		label_EmailAddress, label_CurrentEmailAddress, 
-        		button_ProceedToUserHomePage);
+        		button_ProceedToUserHomePage,
+        		button_show_password,button_show_email
+        		);
 	}
 	
 	
