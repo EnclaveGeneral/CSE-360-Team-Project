@@ -60,6 +60,7 @@ public class Database {
 	static final String USER = "sa"; 
 	static final String PASS = ""; 
 
+
 	//  Shared variables used within this class
 	private Connection connection = null;		// Singleton to access the database 
 	private Statement statement = null;			// The H2 Statement is used to construct queries
@@ -76,6 +77,8 @@ public class Database {
 	private boolean currentAdminRole;
 	private boolean currentNewRole1;
 	private boolean currentNewRole2;
+	
+	private encrypt encrypt; 
 
 	/*******
 	 * <p> Method: Database </p>
@@ -85,7 +88,7 @@ public class Database {
 	 */
 	
 	public Database () {
-		
+		encrypt = new encrypt(applicationMain.FoundationsMain.password, 3);
 	}
 	
 	
@@ -104,7 +107,7 @@ public class Database {
 			connection = DriverManager.getConnection(DB_URL, USER, PASS);
 			statement = connection.createStatement(); 
 			// You can use this command to clear the database and restart from fresh.
-//			statement.execute("DROP ALL OBJECTS");
+             //statement.execute("DROP ALL OBJECTS");
 
 			createTables();  // Create the necessary tables if they don't exist
 		} catch (ClassNotFoundException e) {
@@ -210,6 +213,8 @@ public class Database {
 			pstmt.setString(1, currentUsername);
 			
 			currentPassword = user.getPassword();
+			currentPassword = encrypt.encrypt_data(currentPassword);
+			System.out.println("currentPassword: " + currentPassword);
 			pstmt.setString(2, currentPassword);
 			
 			currentFirstName = user.getFirstName();
@@ -225,6 +230,8 @@ public class Database {
 			pstmt.setString(6, currentPreferredFirstName);
 			
 			currentEmailAddress = user.getEmailAddress();
+			currentEmailAddress = encrypt.encrypt_data(currentEmailAddress);
+			System.out.println("currentEmailAddress: " + currentEmailAddress);
 			pstmt.setString(7, currentEmailAddress);
 			
 			currentAdminRole = user.getAdminRole();
@@ -281,7 +288,10 @@ public class Database {
 				+ "adminRole = TRUE";
 		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
 			pstmt.setString(1, user.getUserName());
-			pstmt.setString(2, user.getPassword());
+			String str = user.getPassword();
+			str = encrypt.encrypt_data(str);
+			pstmt.setString(2, str);
+			
 			ResultSet rs = pstmt.executeQuery();
 			return rs.next();	// If a row is returned, rs.next() will return true		
 		} catch  (SQLException e) {
@@ -308,7 +318,9 @@ public class Database {
 				+ "newRole1 = TRUE";
 		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
 			pstmt.setString(1, user.getUserName());
-			pstmt.setString(2, user.getPassword());
+			String str = user.getPassword();
+			str = encrypt.encrypt_data(str);
+			pstmt.setString(2, str);
 			ResultSet rs = pstmt.executeQuery();
 			return rs.next();
 		} catch  (SQLException e) {
@@ -334,7 +346,9 @@ public class Database {
 				+ "newRole2 = TRUE";
 		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
 			pstmt.setString(1, user.getUserName());
-			pstmt.setString(2, user.getPassword());
+			String str = user.getPassword();
+			str = encrypt.encrypt_data(str);
+			pstmt.setString(2, str);
 			ResultSet rs = pstmt.executeQuery();
 			return rs.next();
 		} catch  (SQLException e) {
@@ -679,7 +693,8 @@ public class Database {
 	public void updatePassword(String username, String newPassword) {
 	    String query = "UPDATE userDB SET password = ? WHERE userName = ?";
 	    try (PreparedStatement pstmt = connection.prepareStatement(query)) {
-	        pstmt.setString(1, newPassword);
+	    	newPassword = encrypt.encrypt_data(newPassword);
+	    	pstmt.setString(1, newPassword);
 	        pstmt.setString(2, username);
 	        pstmt.executeUpdate();
 	        currentPassword = newPassword;
@@ -942,10 +957,24 @@ public class Database {
 	public void updateEmailAddress(String username, String emailAddress) {
 	    String query = "UPDATE userDB SET emailAddress = ? WHERE username = ?";
 	    try (PreparedStatement pstmt = connection.prepareStatement(query)) {
-	        pstmt.setString(1, emailAddress);
+	    	emailAddress = encrypt.encrypt_data(emailAddress);
+	    	pstmt.setString(1, emailAddress);
 	        pstmt.setString(2, username);
 	        pstmt.executeUpdate();
 	        currentEmailAddress = emailAddress;
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    }
+	}
+	
+	public void updateUsername(String currentUsername, String newUsername) {
+	    String query = "UPDATE userDB SET username = ? WHERE username = ?";
+	    try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+	        pstmt.setString(1, newUsername);
+	        pstmt.setString(2, currentUsername);
+	        
+	        pstmt.executeUpdate();
+	        
 	    } catch (SQLException e) {
 	        e.printStackTrace();
 	    }
@@ -1061,7 +1090,11 @@ public class Database {
 	 * @return the username value is returned
 	 *  
 	 */
-	public String getCurrentUsername() { return currentUsername;};
+	public String getCurrentUsername() { 
+		System.out.println("currentUsername: " + currentUsername);
+		return currentUsername;
+		
+	};
 
 	
 	/*******
@@ -1072,7 +1105,10 @@ public class Database {
 	 * @return the password value is returned
 	 *  
 	 */
-	public String getCurrentPassword() { return currentPassword;};
+	public String getCurrentPassword() { 
+		System.out.println("currentPassword: " + currentPassword);
+		return currentPassword;
+	};
 
 	
 	/*******
