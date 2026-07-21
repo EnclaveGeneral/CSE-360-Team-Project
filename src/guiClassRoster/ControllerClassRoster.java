@@ -85,69 +85,7 @@ public class ControllerClassRoster {
     }
 	    
 	    
-	    /*******
-	     * <p> Title: build </p>
-	     *
-	     * <p> Description: This method puts together the class roster. It connects to the database
-	     * provided and sorts through the users for students. Since this was built with the intent
-	     * purpose of being a prototype to the aspect, the number of unique responses have been
-	     * fixed for some students (testing purposes) or randomly generated.</p>
-	     * 
-	     */
-	    
-	    
-//	    public void build() {
-//	        List<String> users = database.getUserList();
-//
-//	        if (users == null) {
-//	            throw new IllegalStateException(
-//	                    "Database returned a null user list.");
-//	        }
-//	        classList.clear();
-//	        
-//	        
-//
-//	        for (String username : users) {
-//	        	List<String> studentResponses = new ArrayList<>(); 
-//	             classList.put(username, studentResponses);
-//	            }
-//	        }
-    
-    	public static void inject() {
-    		List<String> users = theDatabase.getUserList();
-    		
-//    		for (String username : users) {
-//    		theDatabase.saveTextPost(username , "This is a test" , "This is a body", "classRoster");
-//    		}
-    		
-    		for (int i = 2; i < users.size() ; i++) {
-    			theDatabase.addReply(i, "Dan", "replyTest"); 
-    		}
-    		
-    		for (int i = 2; i < users.size() +1 ; i = i*2) {
-    			theDatabase.addReply(i, "Alice", "replyTest"); 
-    		}
-    		
-    		for (int i = 2; i < users.size() +1 ; i = i*2 + 1) {
-    			theDatabase.addReply(i, "Ellie", "replyTest"); 
-    		}
-    		
-    		for (int i = 2; i < users.size() +1 ; i = i*2 - 1) {
-    			theDatabase.addReply(i, "Felix", "replyTest"); 
-    		}
-    		
-    		for (int i = 2; i < users.size() +1 ; i = i*3 - 1) {
-    			theDatabase.addReply(i, "Ciera", "replyTest"); 
-    		}
-    		
-    		for (int i = 2; i < users.size() +1 ; i = i*3 - 1) {
-    			theDatabase.addReply(i, "Ciera", "replyTest"); 
-    		}
-    	}
-	    
 	    public static void build(Map<String, List<String>> classList) {
-//	    	inject();
-//	    	theDatabase.deleteUserAccount("<Select a User>");
 	        List<String> users = theDatabase.getUserList();
 
 	        if (users == null) {
@@ -196,32 +134,6 @@ public class ControllerClassRoster {
 	        return classList.get(studentName).size();
 	    }
 	    
-	    /*******
-	     * <p> Title: gradeIncrease </p>
-	     *
-	     * <p> Description: Increase the value assigned to each student, later used for grading.</p>
-	     * 
-	     * @param studentName String value for the name.
-	     * 
-	     */
-	    
-	    
-//	    public void gradeIncrease(String studentName) {
-//	    	classList.merge(studentName, 1 , Integer::sum);
-//	    }
-	    
-	    /*******
-	     * <p> Title: gradeDecrease </p>
-	     *
-	     * <p> Description: Devrease the value assigned to each student, later used for grading.</p>
-	     * 
-	     * @param studentName String value for the name.
-	     * 
-	     */
-	    
-//	    public void gradeDecrease(String studentName) {
-//	    	classList.merge(studentName, -1 , Integer::sum);
-//	    }
 	    
 	    /*******
 	     * <p> Title: containsStudent </p>
@@ -249,17 +161,6 @@ public class ControllerClassRoster {
 	        return classList.size();
 	    }
 	    
-	    /*******
-	     * <p> Title: printList </p>
-	     *
-	     * <p> Description: Print Class Roseter </p>
-	     * 
-	     * 
-	     */
-
-	    public void printList() {
-	        System.out.println(classList);
-	    }
 	    
 	    /*******
 	     * <p> Title: getFlag </p>
@@ -276,7 +177,7 @@ public class ControllerClassRoster {
 	    public static boolean getFlag (String studentName, int countNeeded) {
 	    	int studentReplies = classList.get(studentName).size();
 	    	
-	    	return (studentReplies <= countNeeded) ? true : false;
+	    	return studentReplies < countNeeded;
 	    }
 		
 		
@@ -342,12 +243,12 @@ public class ControllerClassRoster {
 	        Label replies = new Label(classList.get(student).toString());
 	        replies.setPrefWidth(250);
 	        
-	        String temp = getFlag(student, 3)  ? "Pass" : "Fail";
+	        String temp = getFlag(student, 3)  ? "Fail" : "Pass";
 	        Label flag1 = new Label(temp);
 	        flag1.setPrefWidth(100);
 	        
 	        
-	        temp = getFlag(student, 0)  ? "CRITICAL" : "safe";
+	        temp = getFlag(student, 1)  ? "CRITICAL" : "";
 	        Label flag2 = new Label(temp);
 	        flag2.setPrefWidth(100);
 

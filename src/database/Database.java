@@ -107,9 +107,15 @@ public class Database {
 			connection = DriverManager.getConnection(DB_URL, USER, PASS);
 			statement = connection.createStatement(); 
 			// You can use this command to clear the database and restart from fresh.
-             //statement.execute("DROP ALL OBJECTS");
+//             statement.execute("DROP ALL OBJECTS");
+			
+			// You can use this command to flood the database with dummy users, posts, and replies.
+//			inject();
 
 			createTables();  // Create the necessary tables if they don't exist
+			
+
+
 		} catch (ClassNotFoundException e) {
 			System.err.println("JDBC Driver not found: " + e.getMessage());
 		}
@@ -2021,6 +2027,117 @@ public class Database {
 	        e.printStackTrace();
 	    }
 	    return list;
+	}
+	
+	
+	public void register(String username) throws SQLException {
+		String insertUser = "INSERT INTO userDB (userName, password, firstName, middleName, "
+				+ "lastName, preferredFirstName, emailAddress, adminRole, newRole1, newRole2) "
+				+ "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+		try (PreparedStatement pstmt = connection.prepareStatement(insertUser)) {
+			currentUsername = username;
+			pstmt.setString(1, currentUsername);
+			
+			currentPassword = "122404Sm!";
+			currentPassword = encrypt.encrypt_data(currentPassword);
+			System.out.println("currentPassword: " + currentPassword);
+			pstmt.setString(2, currentPassword);
+			
+			currentFirstName = username;
+			pstmt.setString(3, currentFirstName);
+			
+			currentMiddleName = "";			
+			pstmt.setString(4, currentMiddleName);
+			
+			currentLastName = "";
+			pstmt.setString(5, currentLastName);
+			
+			currentPreferredFirstName = username;
+			pstmt.setString(6, currentPreferredFirstName);
+			
+			currentEmailAddress = "";
+			currentEmailAddress = encrypt.encrypt_data(currentEmailAddress);
+			System.out.println("currentEmailAddress: " + currentEmailAddress);
+			pstmt.setString(7, currentEmailAddress);
+			
+			currentAdminRole = false;
+			pstmt.setBoolean(8, currentAdminRole);
+			
+			currentNewRole1 = true;
+			pstmt.setBoolean(9, currentNewRole1);
+			
+			currentNewRole2 = false;
+			pstmt.setBoolean(10, currentNewRole2);
+			
+			pstmt.executeUpdate();
+		}
+		
+	}
+	
+	public void inject() throws SQLException {
+		try {
+			register("Alice");
+			register("Bob");
+			register("Charlie");
+			register("Dan");
+			register("Emily");
+			register("Faye");
+			register("Gabby");
+			register("Helen");
+			register("Ian");
+			register("Jorge");
+			register("Kelly");
+			register("Liam");
+
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    }
+		
+		List<String> users = getUserList();
+		
+		for (String username : users) {
+		saveTextPost(username , "This is a test" , "This is a body", "classRoster");
+		}
+		
+		for (int i = 1; i < users.size() -1; i++) {
+			addReply(i, "Dan", "replyTest"); 
+		}
+		
+		for (int i = 1; i < users.size() -1; i = i*2) {
+			addReply(i, "Alice", "replyTest"); 
+		}
+//		
+		for (int i = 1; i < users.size()-1 ; i = i*2 + 1) {
+			addReply(i, "Emily", "replyTest"); 
+		}
+	
+		for (int i = 2; i < users.size()-1 ; i = i*2 - 1) {
+			addReply(i, "Faye", "replyTest"); 
+		}
+		
+		for (int i = 1; i < users.size() -1 ; i = i*3 - 1) {
+			addReply(i, "Charlie", "replyTest"); 
+
+		}
+		
+		for (int i = 1; i < users.size() -1; i = i*4) {
+			addReply(i, "Gabby", "replyTest"); 
+		}
+		
+		for (int i = 1; i < users.size() -1; i = i*5) {
+			addReply(i, "Helen", "replyTest"); 
+		}
+		
+		for (int i = 1; i < users.size() -1; i = i*4) {
+			addReply(i, "Ian", "replyTest"); 
+		}
+		
+		for (int i = 1; i < users.size() -1; i = i*5) {
+			addReply(i, "Kelly", "replyTest"); 
+		}
+		
+		
+		
 	}
 	
 	// Note : Need id from posts to match post_ID from replies
