@@ -1,32 +1,21 @@
 package guiClassRoster;
 
-
-
-import java.util.List;
-
 import database.Database;
-import entityClasses.DiscussionPost;
-import entityClasses.DiscussionReply;
 import applicationMain.FoundationsMain;
 import javafx.geometry.Insets;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
-import java.sql.SQLException;
 import java.util.*;
-import database.Database;
 
 
 /*******
- * <p> Title: ControllerMyView Class </p>
+ * <p> Title: ControllerClassRoster Class </p>
  *
  * <p> Description: This class implements the Controller component of the MVC design pattern for
- * the unified MyView Board page. It handles all user interactions from MyView,
- * validates input via ModelMyView, and delegates all database operations to Database.
- * The purpose of this gui is to allow users to interact strictly with a filtered view of their 
- * own posts and replies to those posts. Users will be able to filter responses from specific users, specific keywords,
- * and between all messages vs only unread messages. </p>
- *
- * <p> Copyright: Lynn Robert Carter © 2025 </p>
+ * the unified ClassRoster Board page. It handles all user interactions from ClassRoster,
+ * validates input via ModelClassRoster, and delegates all database operations to Database.
+ * The purpose of this gui is to allow users to see a list of the students within the class. Additionally,
+ * instructors and admins are able to see student pass/fail grades and which students have been completely inactive. </p>
  *
  * @author Omid Kadkhodaei
  *
@@ -41,9 +30,16 @@ public class ControllerClassRoster {
 
 	**********************************************************************************************/
 
-
+	/****
+	 * theDatabase is the main accesspoint of the database.
+	 * 
+	 */
 	private static Database theDatabase = FoundationsMain.database;
-	private static Database database;
+	
+	/**
+	 * classList is the store place of the roster to be passed around.
+	 * 
+	 */
     private static Map<String, List<String>> classList = new TreeMap<>();
 	
 	
@@ -56,7 +52,7 @@ public class ControllerClassRoster {
 	**********************************************************************************************/
 
 	/*******
-	 * <p> Method: ControllerMyView() </p>
+	 * <p> Method: ControllerClassRoster() </p>
 	 *
 	 * <p> Description: The default constructor. Not used directly since all methods are static,
 	 * but required by the MVC pattern for consistency with other controller classes. </p>
@@ -65,32 +61,23 @@ public class ControllerClassRoster {
 	public ControllerClassRoster() {
 	}
 	
-	
-	
-	/*******
-     * <p> Title: ClassRoster Constructor </p>
-     *
-     * <p> Description: This constructor initiates the class object and connects to the 
-     * H2 database.
-     *
-     * @param database The database that will be connected to.
-     * 
-     * @throws SQLException throws the exception.
-     */
-
-    public ControllerClassRoster(Database database2) throws SQLException {
-        database = database2;
-       database.connectToDatabase();
-//        classList = new TreeMap<>();
-    }
 	    
-	    
-	    public static void build(Map<String, List<String>> classList) {
-	        List<String> users = theDatabase.getUserList();
-
-	        if (users == null) {
-	            throw new IllegalStateException(
-	                    "Database returned a null user list.");
+	
+    /*******
+	 * <p> Title: build </p>
+	 *
+	 * <p> Description: loads the classList param with users as keys and empty value Lists </p>
+	 * 
+	 * @param classList This is the map that will be filled with a baseline class roster.
+	 * 
+	 */
+    
+	public static void build(Map<String, List<String>> classList) {
+	    List<String> users = theDatabase.getUserList();
+	
+	    if (users == null) {
+	        throw new IllegalStateException(
+	                "Database returned a null user list.");
 	        }
 	        if(classList.size() > 0 ) {
 	        	classList.clear();
@@ -98,7 +85,7 @@ public class ControllerClassRoster {
 	       
 	        
 	        
-
+	
 	        for (String username : users) {
 	        	List<String> studentResponses = new ArrayList<>(); 
 	        	if (!classList.containsKey(username)) {
@@ -107,83 +94,32 @@ public class ControllerClassRoster {
 	        	}
 	        }
 	   
-	    
-	    /*******
-	     * <p> Title: getClassList </p>
-	     *
-	     * <p> Description: Getter method to retrieve the list.</p>
-	     * 
-	     * @return a TreeMap of the class
-	     */
-	    
-	    public Map<String, List<String>> getClassList() {
-	        return new TreeMap<>(classList);
-	    }
-	    
-	    /*******
-	     * <p> Title: getReplyCount </p>
-	     *
-	     * <p> Description: Getter method to retrieve the value pair within the keys..</p>
-	     * 
-	     * @param studentName String value for the name.
-	     * 
-	     * @return Students Reply Count (Int)
-	     */
-
-	    public Integer getReplyCount(String studentName) {
-	        return classList.get(studentName).size();
-	    }
-	    
-	    
-	    /*******
-	     * <p> Title: containsStudent </p>
-	     *
-	     * <p> Description: Checks for a valid student in the class roster. </p>
-	     * 
-	     * @param studentName The name of the student that will be checked.
-	     * 
-	     * @return Boolean flag
-	     */
-
-	    public boolean containsStudent(String studentName) {
-	        return classList.containsKey(studentName);
-	    }
-	    
-	    /*******
-	     * <p> Title: getRosterSize </p>
-	     *
-	     * <p> Description: Gets the roster size and returns as an int. </p>
-	     * 
-	     * @return returns an int for roster size.
-	     */
-
-	    public int getRosterSize() {
-	        return classList.size();
-	    }
-	    
-	    
-	    /*******
-	     * <p> Title: getFlag </p>
-	     *
-	     * <p> Description: Access student key values and generates a flag if the Integer
-	     * is equal to 0. </p>
-	     * 
-	     * @param studentName String value for the name.
-	     * 
-	     * @return boolean for a flag value.
-	     * 
-	     */
-	    
-	    public static boolean getFlag (String studentName, int countNeeded) {
-	    	int studentReplies = classList.get(studentName).size();
-	    	
-	    	return studentReplies < countNeeded;
-	    }
-		
-		
-		
 	
 	
+	/*******
+	 * <p> Title: getFlag </p>
+	 *
+	 * <p> Description: Access student key values and generates a flag if the Integer
+	 * is equal to 0. </p>
+	 * 
+	 * @param studentName String value for the name.
+	 * 
+	 * @param countNeeded Integer threshold that needs to be exceeded to not get flagged.
+	 * 
+	 * @return boolean for a flag value.
+	 * 
+	 */
+	
+	public static boolean getFlag (String studentName, int countNeeded) {
+		int studentReplies = classList.get(studentName).size();
+		
+		return studentReplies < countNeeded;
+	}
+	
+	
+	
+	
+
 	/*-*******************************************************************************************
 
 	List refresh methods
@@ -191,23 +127,18 @@ public class ControllerClassRoster {
 	**********************************************************************************************/
 
 	/*******
-	 * <p> Method: refreshPostList() </p>
+	 * <p> Method: refreshClassRoster() </p>
 	 *
-	 * <p> Description: Retrieves all posts from the database and repopulates listView_Posts.
-	 * Text posts are prefixed with a document icon; image posts with an image icon so the
-	 * user can distinguish post types at a glance. Called after any post CRUD operation. </p>
+	 * <p> Description: Retrieves all students from the database and fills the listview with the 
+	 * students names, and flags for passing the class. </p>
 	 *
 	 */
-	protected static void refreshPostList() {
+	protected static void refreshClassRoster() {
 		
-		System.out.println("Inside refreshPostList");
-		System.out.println(classList);
 		classList.clear();
 		
 		classList = theDatabase.getClassRoster();
-		System.out.println(classList);
-
-		
+	
 	    ViewClassRoster.listView_Posts.getItems().clear();
 	    
 	    // set up top line.
@@ -260,51 +191,6 @@ public class ControllerClassRoster {
 	        ViewClassRoster.listView_Posts.getItems().add(row);
 	    }
 	    
-	    System.out.println(classList);
-	}
-
-
-	/*-*******************************************************************************************
-
-	Selection methods
-
-	**********************************************************************************************/
-
-	/*******
-	 * <p> Method: selectPost() </p>
-	 *
-	 * <p> Description: Handles the user clicking a post in listView_Posts. Stores its id in
-	 * selectedPostId, populates the input fields with the post's data, and loads its replies.
-	 * For image posts, the body field is left blank since there is no editable text body. </p>
-	 *
-	 */
-	protected static void selectPost() {
-		int index = ViewClassRoster.listView_Posts.getSelectionModel().getSelectedIndex();
-		if (index == -1) return;
-
-		List<DiscussionPost> posts = theDatabase.getAllPosts();
-		if (index >= posts.size()) return;
-
-		DiscussionPost p = posts.get(index);
-
-
-	}
-
-
-	/*-*******************************************************************************************
-
-	Post action methods
-
-	**********************************************************************************************/
-	
-	/*******
-	 * <p> Method: launchMyView() </p>
-	 *
-	 * <p> Description: method that is used to launch the gui of myView in MVC style. </p>
-	 *
-	 */
-	public static void launchMyView() {
-		guiMyView.ViewMyView.displayMyView(ViewClassRoster.theStage, ViewClassRoster.theUser);
 	}
 
 
