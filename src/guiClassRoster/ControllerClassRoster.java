@@ -116,8 +116,25 @@ public class ControllerClassRoster {
 		return studentReplies < countNeeded;
 	}
 	
+	/*******
+	 * <p> Title: refreshClassRoster </p>
+	 *
+	 * <p> Description: Access student key values and generates a flag if the Integer
+	 * is equal to 0. </p>
+	 * 
+	 * @param user EntityClass Object storing user info.
+	 * 
+	 */
 	
 	
+	protected static void refreshClassRoster(entityClasses.User user) {
+		if (user.getNewRole1() || user.getAdminRole()) {
+			instructorPlusClassRoster();
+		} else {
+			studentClassRoster();
+		}
+		
+	}
 	
 
 	/*-*******************************************************************************************
@@ -127,13 +144,13 @@ public class ControllerClassRoster {
 	**********************************************************************************************/
 
 	/*******
-	 * <p> Method: refreshClassRoster() </p>
+	 * <p> Method: instructorPlusClassRoster() </p>
 	 *
 	 * <p> Description: Retrieves all students from the database and fills the listview with the 
 	 * students names, and flags for passing the class. </p>
 	 *
 	 */
-	protected static void refreshClassRoster() {
+	protected static void instructorPlusClassRoster() {
 		
 		classList.clear();
 		
@@ -192,6 +209,54 @@ public class ControllerClassRoster {
 	    }
 	    
 	}
+	
+	/*******
+	 * <p> Method: studentClassRoster() </p>
+	 *
+	 * <p> Description: Retrieves all students from the database and fills the listview with the 
+	 * students names. This view is meant for those with the student role. No permissions for grades. </p>
+	 *
+	 */
+	protected static void studentClassRoster() {
+		
+		classList.clear();
+		
+		classList = theDatabase.getClassRoster();
+	
+	    ViewClassRoster.listView_Posts.getItems().clear();
+	    
+	    // set up top line.
+        HBox headerRow = new HBox(10);
+        headerRow.setPadding(new Insets(5));
+	    
+	    Label headerName = new Label("Students");
+	    headerName.setPrefWidth(120);
+	    
+
+        headerRow.getChildren().addAll(headerName);
+
+        ViewClassRoster.listView_Posts.getItems().add(headerRow);
+	   
+	    
+	    
+	    
+	    // Set up following rows.
+	    for (String student : classList.keySet()) {
+
+	        Label name = new Label(student);
+	        name.setPrefWidth(120);
+
+
+	        HBox row = new HBox(10);
+	        row.setPadding(new Insets(5));
+
+	        row.getChildren().addAll(name);
+
+	        ViewClassRoster.listView_Posts.getItems().add(row);
+	    }
+	    
+	}
+
 
 
 	/*-*******************************************************************************************

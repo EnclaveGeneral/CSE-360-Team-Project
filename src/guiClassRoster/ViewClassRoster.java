@@ -154,7 +154,7 @@ public class ViewClassRoster {
 		theStage.setScene(theRoster);
 		theStage.show();
 
-		ControllerClassRoster.refreshClassRoster();
+		ControllerClassRoster.refreshClassRoster(user);
 	}
 
 
