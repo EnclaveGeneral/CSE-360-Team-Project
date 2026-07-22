@@ -110,6 +110,7 @@ public class Database {
 //             statement.execute("DROP ALL OBJECTS");
 			
 			// You can use this command to flood the database with dummy users, posts, and replies.
+			// Only  use this after you have already completed first time log in.
 //			inject();
 
 			createTables();  // Create the necessary tables if they don't exist
@@ -264,11 +265,13 @@ public class Database {
  */
 	public List<String> getUserList () {
 		List<String> userList = new ArrayList<String>();
-		String query = "SELECT userName FROM userDB";
+		String query = "SELECT userName, newRole2 FROM userDB";
 		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
 			ResultSet rs = pstmt.executeQuery();
 			while (rs.next()) {
-				userList.add(rs.getString("userName"));
+				if (rs.getBoolean("newRole2") == true) {
+					userList.add(rs.getString("userName"));
+				}
 			}
 		} catch (SQLException e) {
 	        return null;
@@ -1976,6 +1979,19 @@ public class Database {
 	
 	// XX - end of new search methods
 	
+	/*******
+	 * <p> Method: getClassRoster </p>
+	 * 
+	 * <p> Description: This is a quality assurance method created by overloading the register method.
+	 * This serves with the explicit purpose of flooding
+	 * the database with dummy accounts. This functionality allows objects to
+	 * be tested on for the classRoster and other statistical purposes. </p>
+	 * 
+	 * @return Returns a fully generated class roster in the form of a map (Students, ArrayList for student responses).
+	 * 
+	 * @throws SQLException
+	 */
+	
 	
 	public Map<String, List<String>> getClassRoster() {
 	    Map<String, List<String>> list = new TreeMap<>();
@@ -2029,6 +2045,19 @@ public class Database {
 	    return list;
 	}
 	
+	/*******
+	 * <p> Method: register </p>
+	 * 
+	 * <p> Description: This is a quality assurance method created by overloading the register method.
+	 * This serves with the explicit purpose of flooding
+	 * the database with dummy accounts. This functionality allows objects to
+	 * be tested on for the classRoster and other statistical purposes. </p>
+	 * 
+	 * @param username A String value that will be used to create users.
+	 * 
+	 * @throws SQLException
+	 */
+	
 	
 	public void register(String username) throws SQLException {
 		String insertUser = "INSERT INTO userDB (userName, password, firstName, middleName, "
@@ -2063,10 +2092,10 @@ public class Database {
 			currentAdminRole = false;
 			pstmt.setBoolean(8, currentAdminRole);
 			
-			currentNewRole1 = true;
+			currentNewRole1 = false;
 			pstmt.setBoolean(9, currentNewRole1);
 			
-			currentNewRole2 = false;
+			currentNewRole2 = true;
 			pstmt.setBoolean(10, currentNewRole2);
 			
 			pstmt.executeUpdate();
@@ -2074,7 +2103,17 @@ public class Database {
 		
 	}
 	
+	/*******
+	 * <p> Method: inject </p>
+	 * 
+	 * <p> Description: This is a quality assurance method. This serves with the explicit purpose of flooding
+	 * the database with dummy accounts, dummy posts, and dummy replies. This functionality allows objects to
+	 * be tested on for the classRoster and other statistical purposes. </p>
+	 */
+	
 	public void inject() throws SQLException {
+		
+		// Create users with the role1 boolean set to true, admin to false.
 		try {
 			register("Alice");
 			register("Bob");
@@ -2093,11 +2132,16 @@ public class Database {
 	        e.printStackTrace();
 	    }
 		
+		
 		List<String> users = getUserList();
+		
+		// Create dummy posts for all the users.
 		
 		for (String username : users) {
 		saveTextPost(username , "This is a test" , "This is a body", "classRoster");
 		}
+		
+		// Have some users generate dummy replies.
 		
 		for (int i = 1; i < users.size() -1; i++) {
 			addReply(i, "Dan", "replyTest"); 
@@ -2106,7 +2150,7 @@ public class Database {
 		for (int i = 1; i < users.size() -1; i = i*2) {
 			addReply(i, "Alice", "replyTest"); 
 		}
-//		
+		
 		for (int i = 1; i < users.size()-1 ; i = i*2 + 1) {
 			addReply(i, "Emily", "replyTest"); 
 		}
@@ -2136,11 +2180,6 @@ public class Database {
 			addReply(i, "Kelly", "replyTest"); 
 		}
 		
-		
-		
-	}
-	
-	// Note : Need id from posts to match post_ID from replies
-	
+	}	
 
 }
