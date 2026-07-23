@@ -4,10 +4,11 @@ package guiRole2;
 /*******
  * <p> Title: ControllerRole2Home Class. </p>
  * 
- * <p> Description: The Java/FX-based Role 2 Home Page.  This class provides the controller
- * actions basic on the user's use of the JavaFX GUI widgets defined by the View class.
- * 
- * This page is a stub for establish future roles for the application.
+ * <p> Description: The Java/FX-based Role 2 Home Page, now serving as the Grader Home Page
+ * (TP3 Aspect #1: Instructor/Grader Role &amp; Secure Access). Originally an unused stub role;
+ * repurposed here instead of adding a fourth role flag to entityClasses.User, which would have
+ * touched the database schema, login, and registration flows. This class provides the
+ * controller actions based on the user's use of the JavaFX GUI widgets defined by the View class.
  * 
  * The class has been written assuming that the View or the Model are the only class methods that
  * can invoke these methods.  This is why each has been declared at "protected".  Do not change any
@@ -18,7 +19,8 @@ package guiRole2;
  * @author Lynn Robert Carter
  * 
  * @version 1.00		2025-08-17 Initial version
- * @version 1.01		2025-09-16 Update Javadoc documentation *  
+ * @version 1.01		2025-09-16 Update Javadoc documentation
+ * @version 2.00		2026-07-19 Repurposed as the Grader Home Page for TP3 Aspect #1
  */
 
 public class ControllerRole2Home {
@@ -74,7 +76,15 @@ public class ControllerRole2Home {
 		System.exit(0);
 	}
 	
-	protected static void forum() {
-		guiDiscussion.ViewDiscussion.displayDiscussion(ViewRole2Home.theStage, ViewRole2Home.theUser);
+	/*******
+	 * <p> Method: openGraderView() </p>
+	 *
+	 * <p> Description: Navigates to the Grader View page (TP3 Aspect #1), the secure read-only
+	 * browser over every student's posts and replies. Replaces the earlier "forum" method, which
+	 * sent the Grader into the full read-write Discussion board instead. </p>
+	 *
+	 */
+	protected static void openGraderView() {
+		guiGraderView.ViewGraderView.displayGraderView(ViewRole2Home.theStage, ViewRole2Home.theUser);
 	}
 }
