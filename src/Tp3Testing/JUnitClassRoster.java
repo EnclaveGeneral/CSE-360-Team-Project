@@ -141,7 +141,7 @@ class JUnitClassRoster {
 	}
 	
 	/*******
-	 * <p> Method: getUniqueResponsesAndrew() </p>
+	 * <p> Method: getUniqueResponsesLiam() </p>
 	 *
 	 * <p> Description: This test addresses the deliverable that if the number
 	 * of unique responses is 0, then a flag boolean (false) is returned. </p>
@@ -149,7 +149,7 @@ class JUnitClassRoster {
 	
 	@Test
 	@Order(6)
-	void getUniqueResponsesAndrew () {
+	void getUniqueResponsesLiam () {
 		assertEquals(true, classList.get("Liam").size() == 0);
 	}
 	
