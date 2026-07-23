@@ -208,6 +208,11 @@ public class ControllerClassRoster {
 	        ViewClassRoster.listView_Posts.getItems().add(row);
 	    }
 	    
+//	    for (String student : classList.keySet()) {
+//	    	System.out.println(student + ": " + classList.get(student));
+//	    	System.out.println(student + " Responded to " + classList.get(student).size() + " Students.\n");
+//	    }
+	    
 	}
 	
 	/*******
