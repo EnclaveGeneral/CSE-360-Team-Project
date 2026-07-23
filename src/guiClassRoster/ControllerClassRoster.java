@@ -5,6 +5,8 @@ import applicationMain.FoundationsMain;
 import javafx.geometry.Insets;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
+
+import java.sql.SQLException;
 import java.util.*;
 
 
@@ -60,7 +62,7 @@ public class ControllerClassRoster {
 	 */
 	public ControllerClassRoster() {
 	}
-	
+
 	    
 	
     /*******
@@ -188,10 +190,10 @@ public class ControllerClassRoster {
 	        Label name = new Label(student);
 	        name.setPrefWidth(120);
 
-	        Label replies = new Label(classList.get(student).toString());
+	        Label replies = new Label("" + classList.get(student).size());
 	        replies.setPrefWidth(250);
 	        
-	        String temp = getFlag(student, 3)  ? "Fail" : "Pass";
+	        String temp = getFlag(student, 3)  ? "Not Met" : "Met";
 	        Label flag1 = new Label(temp);
 	        flag1.setPrefWidth(100);
 	        
