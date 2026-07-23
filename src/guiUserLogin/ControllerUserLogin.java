@@ -144,7 +144,7 @@ public class ControllerUserLogin {
 			} else if (user.getNewRole2()) {
 				loginResult = theDatabase.loginRole2(user);
 				if (loginResult) {
-					guiRole2.ViewRole2Home.displayRole2Home(theStage, user);
+					guiInstructions.viewInstructions.displayviewInstructions(theStage, user);
 				}
 				// Other roles
 			} else {
