@@ -110,7 +110,6 @@ public class Database {
 //             statement.execute("DROP ALL OBJECTS");
 			
 			// You can use this command to flood the database with dummy users, posts, and replies.
-			// Only  use this after you have already completed first time log in.
 //			inject();
 
 			createTables();  // Create the necessary tables if they don't exist
@@ -265,13 +264,11 @@ public class Database {
  */
 	public List<String> getUserList () {
 		List<String> userList = new ArrayList<String>();
-		String query = "SELECT userName, newRole2 FROM userDB";
+		String query = "SELECT userName FROM userDB";
 		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
 			ResultSet rs = pstmt.executeQuery();
 			while (rs.next()) {
-				if (rs.getBoolean("newRole2") == true) {
-					userList.add(rs.getString("userName"));
-				}
+				userList.add(rs.getString("userName"));
 			}
 		} catch (SQLException e) {
 	        return null;
@@ -1979,19 +1976,6 @@ public class Database {
 	
 	// XX - end of new search methods
 	
-	/*******
-	 * <p> Method: getClassRoster </p>
-	 * 
-	 * <p> Description: This is a quality assurance method created by overloading the register method.
-	 * This serves with the explicit purpose of flooding
-	 * the database with dummy accounts. This functionality allows objects to
-	 * be tested on for the classRoster and other statistical purposes. </p>
-	 * 
-	 * @return Returns a fully generated class roster in the form of a map (Students, ArrayList for student responses).
-	 * 
-	 * @throws SQLException
-	 */
-	
 	
 	public Map<String, List<String>> getClassRoster() {
 	    Map<String, List<String>> list = new TreeMap<>();
@@ -2044,21 +2028,84 @@ public class Database {
 	    }
 	    return list;
 	}
-	
+
+
 	/*******
-	 * <p> Method: register </p>
-	 * 
-	 * <p> Description: This is a quality assurance method created by overloading the register method.
-	 * This serves with the explicit purpose of flooding
-	 * the database with dummy accounts. This functionality allows objects to
-	 * be tested on for the classRoster and other statistical purposes. </p>
-	 * 
-	 * @param username A String value that will be used to create users.
-	 * 
-	 * @throws SQLException
+	 * <p> Method: countDistinctStudentsAnswered </p>
+	 *
+	 * <p> Description: Implements the Reply-to-Question Traceability requirement (TP3 Aspect
+	 * #3, Staff Epic covering fair grading of discussion participation): counts how many
+	 * distinct other students a given student has answered, by following the postId foreign
+	 * key from each of that student's replies back to the post it answers. A single query does
+	 * all the filtering that the TP2 prototype needed application code for: the INNER JOIN
+	 * naturally excludes any reply whose post no longer exists (including cascade-deleted
+	 * posts, since replies.post_id has an ON DELETE CASCADE foreign key to posts.id), the
+	 * p.author &lt;&gt; r.author condition excludes self-replies, and COUNT(DISTINCT ...)
+	 * handles de-duplication when a student has replied to the same other student more than
+	 * once. </p>
+	 *
+	 * <p> Unlike most query methods in this class, a failed query here is not caught into a
+	 * default return value -- a caught SQLException would look identical to a real "answered
+	 * zero students" result, and this feeds a pass/fail grading decision. </p>
+	 *
+	 * <p> Tested by gradingSupportTests.AnswerCoverageDatabaseTest, covering the zero-reply
+	 * case, the exact three-student boundary, self-replies, duplicate replies, and a reply to a
+	 * since-deleted post. </p>
+	 *
+	 * @param username the student whose answer coverage is being checked; null or blank
+	 *                 returns 0 without querying the database
+	 *
+	 * @return the number of distinct other students username has replied to
+	 *
+	 * @throws SQLException if the query itself fails (connection lost, malformed schema, etc.)
+	 *
 	 */
-	
-	
+	public int countDistinctStudentsAnswered(String username) throws SQLException {
+		if (username == null || username.isBlank()) return 0;
+
+		String sql = "SELECT COUNT(DISTINCT p.author) AS distinct_count " +
+				"FROM replies r JOIN posts p ON r.post_id = p.id " +
+				"WHERE r.author = ? AND p.author <> r.author";
+
+		try (PreparedStatement ps = connection.prepareStatement(sql)) {
+			ps.setString(1, username);
+			try (ResultSet rs = ps.executeQuery()) {
+				return rs.next() ? rs.getInt("distinct_count") : 0;
+			}
+		}
+	}
+
+
+	/*******
+	 * <p> Method: hasMetAnswerCoverageRequirement </p>
+	 *
+	 * <p> Description: Answers the Instructional Team's actual grading question directly: has
+	 * username answered questions from at least MINIMUM_DISTINCT_STUDENTS_REQUIRED different
+	 * students? A thin wrapper around countDistinctStudentsAnswered rather than a second
+	 * implementation of the traceability logic, so the count and the threshold check can never
+	 * drift out of sync with each other. </p>
+	 *
+	 * <p> Tested by gradingSupportTests.AnswerCoverageDatabaseTest, covering the threshold
+	 * exactly and one value on each side of it. </p>
+	 *
+	 * @param username the student being checked; null or blank returns false
+	 *
+	 * @return true if username has answered at least MINIMUM_DISTINCT_STUDENTS_REQUIRED
+	 *         distinct students; false otherwise
+	 *
+	 * @throws SQLException if the underlying query fails
+	 *
+	 */
+	public boolean hasMetAnswerCoverageRequirement(String username) throws SQLException {
+		return countDistinctStudentsAnswered(username) >= MINIMUM_DISTINCT_STUDENTS_REQUIRED;
+	}
+
+
+	/** The minimum number of distinct students a student must answer to satisfy the
+	 *  discussion-participation requirement (TP3 Aspect #3). */
+	public static final int MINIMUM_DISTINCT_STUDENTS_REQUIRED = 3;
+
+
 	public void register(String username) throws SQLException {
 		String insertUser = "INSERT INTO userDB (userName, password, firstName, middleName, "
 				+ "lastName, preferredFirstName, emailAddress, adminRole, newRole1, newRole2) "
@@ -2092,10 +2139,10 @@ public class Database {
 			currentAdminRole = false;
 			pstmt.setBoolean(8, currentAdminRole);
 			
-			currentNewRole1 = false;
+			currentNewRole1 = true;
 			pstmt.setBoolean(9, currentNewRole1);
 			
-			currentNewRole2 = true;
+			currentNewRole2 = false;
 			pstmt.setBoolean(10, currentNewRole2);
 			
 			pstmt.executeUpdate();
@@ -2103,17 +2150,7 @@ public class Database {
 		
 	}
 	
-	/*******
-	 * <p> Method: inject </p>
-	 * 
-	 * <p> Description: This is a quality assurance method. This serves with the explicit purpose of flooding
-	 * the database with dummy accounts, dummy posts, and dummy replies. This functionality allows objects to
-	 * be tested on for the classRoster and other statistical purposes. </p>
-	 */
-	
 	public void inject() throws SQLException {
-		
-		// Create users with the role1 boolean set to true, admin to false.
 		try {
 			register("Alice");
 			register("Bob");
@@ -2132,16 +2169,11 @@ public class Database {
 	        e.printStackTrace();
 	    }
 		
-		
 		List<String> users = getUserList();
-		
-		// Create dummy posts for all the users.
 		
 		for (String username : users) {
 		saveTextPost(username , "This is a test" , "This is a body", "classRoster");
 		}
-		
-		// Have some users generate dummy replies.
 		
 		for (int i = 1; i < users.size() -1; i++) {
 			addReply(i, "Dan", "replyTest"); 
@@ -2150,7 +2182,7 @@ public class Database {
 		for (int i = 1; i < users.size() -1; i = i*2) {
 			addReply(i, "Alice", "replyTest"); 
 		}
-		
+//		
 		for (int i = 1; i < users.size()-1 ; i = i*2 + 1) {
 			addReply(i, "Emily", "replyTest"); 
 		}
@@ -2180,6 +2212,11 @@ public class Database {
 			addReply(i, "Kelly", "replyTest"); 
 		}
 		
-	}	
+		
+		
+	}
+	
+	// Note : Need id from posts to match post_ID from replies
+	
 
 }
