@@ -70,16 +70,26 @@ public class ControllerMyView {
 	/*******
 	 * <p> Method: refreshPostList() </p>
 	 *
-	 * <p> Description: Retrieves all posts from the database and repopulates listView_Posts.
-	 * Text posts are prefixed with a document icon; image posts with an image icon so the
-	 * user can distinguish post types at a glance. Called after any post CRUD operation. </p>
+	 * <p> Description: Retrieves all posts from the database and repopulates listView_Posts
+	 * with only the posts authored by the currently logged-in user. Text posts are prefixed
+	 * with a document icon; image posts with an image icon so the user can distinguish post
+	 * types at a glance. Called after any post CRUD operation. </p>
+	 *
+	 * <p> Author-scoped by design (CWE-200): a previous version of this method called
+	 * getAllPosts() with no filter, so MyView showed every student's posts instead of just the
+	 * logged-in user's own. The filter below is the fix. </p>
+	 *
+	 * <p> Tested by guiMyView.ControllerMyViewSecurityTest. </p>
 	 *
 	 */
 	protected static void refreshPostList() {
 	    ViewMyView.listView_Posts.getItems().clear();
+	    String currentUser = ViewMyView.theUser.getUserName();
 	    List<DiscussionPost> posts = theDatabase.getAllPosts();
-	    
+
 	    for (DiscussionPost p : posts) {
+	        if (!p.getAuthor().equals(currentUser)) continue;
+
 	        String icon = p.isImagePost() ? "\uD83D\uDDBC" : "\uD83D\uDCC4";
 
 	        Label postLabel = new Label(icon + " [" + p.getId() + "] " + p.getTitle() + " — " + p.getAuthor());
@@ -255,13 +265,22 @@ public class ControllerMyView {
 	/*******
 	 * <p> Method: performBack() </p>
 	 *
-	 * <p> Description: Returns the user to their home page. Reads activeHomePage to decide
-	 * whether to route to the Admin home (1) or Role1 home (any other value). </p>
+	 * <p> Description: Returns the user to their own role's home page, based on
+	 * FoundationsMain.activeHomePage (Admin: 1; Role1: 2; Role2: 3, set by each role's home
+	 * page when it is displayed). </p>
+	 *
+	 * <p> Previously this method only distinguished activeHomePage == 1 (routed to the
+	 * Discussion board) from every other value (routed to Role1 Home regardless of which role
+	 * was actually active), so an Admin or Role2 user reaching MyView would be sent to the
+	 * wrong home page on Back. Each of the three roles is now routed to its own home page. </p>
 	 *
 	 */
 	protected static void performBack() {
 		if (FoundationsMain.activeHomePage == 1) {
-			guiDiscussion.ViewDiscussion.displayDiscussion(
+			guiAdminHome.ViewAdminHome.displayAdminHome(
+				ViewMyView.theStage, ViewMyView.theUser);
+		} else if (FoundationsMain.activeHomePage == 3) {
+			guiRole2.ViewRole2Home.displayRole2Home(
 				ViewMyView.theStage, ViewMyView.theUser);
 		} else {
 			guiRole1.ViewRole1Home.displayRole1Home(
