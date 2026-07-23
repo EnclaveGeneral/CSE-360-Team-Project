@@ -98,7 +98,7 @@ class JUnitClassRoster {
 	@Test
 	@Order(2)
 	void rosterIncludesAlice () {
-		assertEquals(true, classList.containsKey("Alice"));
+		assertTrue(classList.containsKey("Alice"));
 	}
 	
 	/*******
@@ -110,7 +110,7 @@ class JUnitClassRoster {
 	@Test
 	@Order(3)
 	void rosterDoesNotInclude() {
-		assertEquals(false, classList.containsKey("Tony"));
+		assertFalse(classList.containsKey("Tony"));
 	}
 	
 	/*******
@@ -154,7 +154,6 @@ class JUnitClassRoster {
 	}
 	
 	
-
 }
 
 
