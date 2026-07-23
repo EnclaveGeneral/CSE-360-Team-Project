@@ -1733,6 +1733,40 @@ public class Database {
 	}
 
 	/*******
+	 * <p> Method: getAllReplies </p>
+	 *
+	 * <p> Description: Retrieves every reply on the discussion board, across all posts. This is
+	 * the companion feed to getAllPosts(): together they supply the two lists the Aggregate
+	 * Statistics Engine (TP3 Aspect #4) consumes via ParticipationStats.computeAll. A failed
+	 * query is caught into an empty list, matching getRepliesForPost -- this method feeds a
+	 * display page, where an empty roster is an honest rendering of "no data could be read",
+	 * unlike countDistinctStudentsAnswered, which throws because it feeds a pass/fail verdict. </p>
+	 *
+	 * @return the list of every DiscussionReply on the board, oldest first
+	 *
+	 */
+	public java.util.List<entityClasses.DiscussionReply> getAllReplies() {
+	    java.util.List<entityClasses.DiscussionReply> list = new java.util.ArrayList<>();
+	    String sql = "SELECT id, post_id, author, body, created_at, read FROM replies ORDER BY created_at ASC";
+	    try (PreparedStatement ps = connection.prepareStatement(sql);
+	         ResultSet rs = ps.executeQuery()) {
+	        while (rs.next()) {
+	            list.add(new entityClasses.DiscussionReply(
+	                    rs.getInt("id"),
+	                    rs.getInt("post_id"),
+	                    rs.getString("author"),
+	                    rs.getString("body"),
+	                    rs.getString("created_at"),
+	                    rs.getBoolean("read")));
+	        }
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	    }
+	    return list;
+	}
+
+
+	/*******
 	 * <p> Method: addReply </p>
 	 *
 	 * <p> Description: Inserts a new reply for the given post. </p>
@@ -2219,4 +2253,6 @@ public class Database {
 	// Note : Need id from posts to match post_ID from replies
 	
 
+
+	
 }

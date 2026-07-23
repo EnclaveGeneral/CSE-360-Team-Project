@@ -167,6 +167,18 @@ public class ControllerGraderView {
 	}
 
 	/*******
+	 * <p> Method: openStatistics() </p>
+	 *
+	 * <p> Description: Navigates to the Aggregate Statistics page (TP3 Aspect #4), which shows
+	 * every student's post, reply, and distinct-students-answered counts with the pass/fail
+	 * verdict, computed by the statistics.ParticipationStats engine. </p>
+	 *
+	 */
+	protected static void openStatistics() {
+		guiStatistics.ViewStatistics.displayStatistics(ViewGraderView.theStage, ViewGraderView.theUser);
+	}
+
+	/*******
 	 * <p> Method: performBack() </p>
 	 *
 	 * <p> Description: Returns the Grader to their Role2 home page. </p>

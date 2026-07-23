@@ -64,6 +64,7 @@ public class ViewGraderView {
 	protected static ListView<String> listView_Replies = new ListView<>();
 	protected static Label label_Coverage = new Label();
 	protected static Button button_ClassRoster = new Button("Class Roster");
+	protected static Button button_Statistics  = new Button("Participation Statistics");
 	private static Line line_Separator2 = new Line(20, 480, width - 20, 480);
 
 	// GUI Area 3: navigation
@@ -153,6 +154,9 @@ public class ViewGraderView {
 		setupButtonUI(button_ClassRoster, "Dialog", 16, 200, Pos.CENTER, 20, 485);
 		button_ClassRoster.setOnAction((_) -> { guiGraderView.ControllerGraderView.openClassRoster(); });
 
+		setupButtonUI(button_Statistics, "Dialog", 16, 240, Pos.CENTER, 240, 485);
+		button_Statistics.setOnAction((_) -> { guiGraderView.ControllerGraderView.openStatistics(); });
+
 		// GUI Area 3
 		setupButtonUI(button_Back, "Dialog", 18, 150, Pos.CENTER, 20, 540);
 		button_Back.setOnAction((_) -> { guiGraderView.ControllerGraderView.performBack(); });
@@ -165,7 +169,7 @@ public class ViewGraderView {
 
 		theRootPane.getChildren().addAll(
 			label_PageTitle, label_UserDetails, line_Separator1,
-			listView_Posts, label_Coverage, listView_Replies, button_ClassRoster, line_Separator2,
+			listView_Posts, label_Coverage, listView_Replies, button_ClassRoster, button_Statistics, line_Separator2,
 			button_Back, button_Logout, button_Quit);
 	}
 

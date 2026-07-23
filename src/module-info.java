@@ -10,6 +10,7 @@ module FoundationsF26 {
     requires java.sql;
 	requires javafx.graphics;
 	requires javafx.swing;
+	requires org.junit.jupiter.api;
     
     opens applicationMain to javafx.graphics, javafx.fxml;
     opens guiAdminHome to javafx.graphics, javafx.fxml;
