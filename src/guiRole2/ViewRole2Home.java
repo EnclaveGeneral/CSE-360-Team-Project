@@ -17,15 +17,17 @@ import guiAdminHome.ControllerAdminHome;
 /*******
  * <p> Title: ViewRole2Home Class. </p>
  * 
- * <p> Description: The Java/FX-based Role2 Home Page.  The page is a stub for some role needed for
- * the application.  The widgets on this page are likely the minimum number and kind for other role
- * pages that may be needed.</p>
+ * <p> Description: The Java/FX-based Role2 Home Page, now serving as the Grader Home Page
+ * (TP3 Aspect #1: Instructor/Grader Role &amp; Secure Access). Originally a stub for some role
+ * needed for the application. The widgets on this page are likely the minimum number and kind for
+ * other role pages that may be needed.</p>
  * 
  * <p> Copyright: Lynn Robert Carter © 2025 </p>
  * 
  * @author Lynn Robert Carter
  * 
  * @version 1.00		2025-04-20 Initial version
+ * @version 2.00		2026-07-19 Repurposed as the Grader Home Page for TP3 Aspect #1
  *  
  */
 
@@ -57,7 +59,7 @@ public class ViewRole2Home {
 	// GUI ARea 2: This is a stub, so there are no widgets here.  For an actual role page, this are
 	// would contain the widgets needed for the user to play the assigned role.
 	
-	protected static Button button_forum = new Button("forum");
+	protected static Button button_graderView = new Button("Grader View");
 	
 	// This is a separator and it is used to partition the GUI for various tasks
 	protected static Line line_Separator4 = new Line(20, 525, width-20,525);
@@ -127,7 +129,7 @@ public class ViewRole2Home {
 		label_UserDetails.setText("User: " + theUser.getUserName());// Set the username
 
 		// Set the title for the window, display the page, and wait for the Admin to do something
-		theStage.setTitle("CSE 360 Foundations: Role2 Home Page");
+		theStage.setTitle("CSE 360 Foundations: Grader Home Page");
 		theStage.setScene(theRole2HomeScene);						// Set this page onto the stage
 		theStage.show();											// Display it to the user
 	}
@@ -157,7 +159,7 @@ public class ViewRole2Home {
 		// Populate the window with the title and other common widgets and set their static state
 		
 		// GUI Area 1
-		label_PageTitle.setText("Role2 Home Page");
+		label_PageTitle.setText("Grader Home Page");
 		setupLabelUI(label_PageTitle, "Arial", 28, width, Pos.CENTER, 0, 5);
 
 		label_UserDetails.setText("User: " + theUser.getUserName());
@@ -170,8 +172,8 @@ public class ViewRole2Home {
 		
 			// This is a stub, so this area is empty
 		
-		setupButtonUI(button_forum, "Dialog", 16, 250, Pos.CENTER, 400, 270);
-		button_forum.setOnAction((_) -> {ControllerRole2Home.forum(); });
+		setupButtonUI(button_graderView, "Dialog", 16, 250, Pos.CENTER, 400, 270);
+		button_graderView.setOnAction((_) -> {ControllerRole2Home.openGraderView(); });
 		
 		
 		// GUI Area 3
@@ -186,7 +188,7 @@ public class ViewRole2Home {
 		// Place all of the widget items into the Root Pane's list of children
         theRootPane.getChildren().addAll(
 			label_PageTitle, label_UserDetails, button_UpdateThisUser, line_Separator1,
-	        line_Separator4, button_Logout, button_Quit, button_forum);
+	        line_Separator4, button_Logout, button_Quit, button_graderView);
 	}
 	
 	
