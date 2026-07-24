@@ -107,7 +107,7 @@ public class Database {
 			connection = DriverManager.getConnection(DB_URL, USER, PASS);
 			statement = connection.createStatement(); 
 			// You can use this command to clear the database and restart from fresh.
-			statement.execute("DROP ALL OBJECTS");
+//             statement.execute("DROP ALL OBJECTS");
 			
 			// You can use this command to flood the database with dummy users, posts, and replies.
 //			inject();
@@ -154,7 +154,6 @@ public class Database {
 
 	    // Create the unified discussion tables (posts + replies)
 	    createDiscussionTables();
-	    createImageEntriesTable();
 	}
 
 
@@ -258,7 +257,7 @@ public class Database {
 /*******
  *  <p> Method: List getUserList() </p>
  *  
- *  <P> Description: Generate an List of Strings, one for each user in the database,
+ *  <P> Description: Generate a List of Strings, one for each user in the database,
  *  starting with "<Select User>" at the start of the list. </p>
  *  
  *  @return a list of userNames found in the database.
@@ -274,10 +273,32 @@ public class Database {
 		} catch (SQLException e) {
 	        return null;
 	    }
-//		System.out.println(userList);
 		return userList;
 	}
-
+	
+	/*******
+	 *  <p> Method: List getStudentList() </p>
+	 *  
+	 *  <P> Description: Generate a List of Strings, one for each *student* in the database. </p>
+	 *  
+	 *  @return a list of student/role 1 userNames found in the database, omitting grader/role2 & administrator.
+	 */
+	public List<String> getStudentList() {
+		List<String> studentList = new ArrayList<String>();
+		// only select users who are Role 1 (a student) for grader's list of students view for grading
+		String query = "SELECT userName FROM userDB WHERE newRole1 = TRUE AND adminRole = FALSE AND newRole2 = FALSE";
+		try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+			ResultSet rs = pstmt.executeQuery();
+			while (rs.next()) {
+				studentList.add(rs.getString("userName"));
+			}
+		} catch (SQLException e) {
+			return null;
+		}
+		return studentList;
+	}
+	
+	
 /*******
  * <p> Method: boolean loginAdmin(User user) </p>
  * 
@@ -1340,7 +1361,7 @@ public class Database {
 	                               "col_position INT" +
 	                               ")";
 	    // stores the arraylist of comments
-	    String comments = "CREATE TABLE IF NOT EXISTS comments (" +
+	    String createCommentsTable = "CREATE TABLE IF NOT EXISTS comments (" +
 	                                 "id INT AUTO_INCREMENT PRIMARY KEY, " +
 	                                 "image_id INT NOT NULL, " +
 	                                 "comment_text VARCHAR(1000), " +
@@ -1350,7 +1371,7 @@ public class Database {
 	    
 	    try (Statement stmt = connection.createStatement()) {
 	        stmt.execute(createImagesTable);
-	        stmt.execute(comments);
+	        stmt.execute(createCommentsTable);
 	    } catch (SQLException e) {
 	        e.printStackTrace();
 	    }
@@ -1590,6 +1611,7 @@ public class Database {
 	            "body CLOB NOT NULL, " +
 	            "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
 	            "read BOOLEAN DEFAULT FALSE, " +
+	            "quality BOOLEAN DEFAULT FALSE, " +
 	            "FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE)";
 
 	    try (Statement stmt = connection.createStatement()) {
@@ -1711,20 +1733,21 @@ public class Database {
 	 * @param postId  the id of the parent post
 	 * @return a List of DiscussionReply objects
 	 */
-	public java.util.List<entityClasses.DiscussionReply> getRepliesForPost(int postId) {
-	    java.util.List<entityClasses.DiscussionReply> list = new java.util.ArrayList<>();
-	    String sql = "SELECT id, post_id, author, body, created_at, read FROM replies WHERE post_id = ? ORDER BY created_at ASC";
+	public List<DiscussionReply> getRepliesForPost(int postId) {
+	    List<DiscussionReply> list = new ArrayList<>();
+	    String sql = "SELECT id, post_id, author, body, created_at, read, quality FROM replies WHERE post_id = ? ORDER BY created_at ASC";
 	    try (PreparedStatement ps = connection.prepareStatement(sql)) {
 	        ps.setInt(1, postId);
 	        try (ResultSet rs = ps.executeQuery()) {
 	            while (rs.next()) {
-	                list.add(new entityClasses.DiscussionReply(
+	                list.add(new DiscussionReply(
 	                        rs.getInt("id"),
 	                        rs.getInt("post_id"),
 	                        rs.getString("author"),
 	                        rs.getString("body"),
 	                        rs.getString("created_at"),
-	                        rs.getBoolean("read")));
+	                        rs.getBoolean("read"),
+                    		rs.getBoolean("quality")));
 	            }
 	        }
 	    } catch (SQLException e) {
@@ -1746,19 +1769,20 @@ public class Database {
 	 * @return the list of every DiscussionReply on the board, oldest first
 	 *
 	 */
-	public java.util.List<entityClasses.DiscussionReply> getAllReplies() {
-	    java.util.List<entityClasses.DiscussionReply> list = new java.util.ArrayList<>();
-	    String sql = "SELECT id, post_id, author, body, created_at, read FROM replies ORDER BY created_at ASC";
+	public List<DiscussionReply> getAllReplies() {
+	    List<DiscussionReply> list = new ArrayList<>();
+	    String sql = "SELECT id, post_id, author, body, created_at, read, quality FROM replies ORDER BY created_at ASC";
 	    try (PreparedStatement ps = connection.prepareStatement(sql);
 	         ResultSet rs = ps.executeQuery()) {
 	        while (rs.next()) {
-	            list.add(new entityClasses.DiscussionReply(
+	            list.add(new DiscussionReply(
 	                    rs.getInt("id"),
 	                    rs.getInt("post_id"),
 	                    rs.getString("author"),
 	                    rs.getString("body"),
 	                    rs.getString("created_at"),
-	                    rs.getBoolean("read")));
+	                    rs.getBoolean("read"),
+                		rs.getBoolean("quality")));
 	        }
 	    } catch (SQLException e) {
 	        e.printStackTrace();
@@ -1918,14 +1942,18 @@ public class Database {
 	    }
 	}
 	
-	
-	// XX - New methods for search functionality 
+		
+	// =========================================================
+	// Search & Filter Methods 
+	// =========================================================
 	
 	
 	/*******
 	 * <p> Method: searchPosts </p>
 	 * 
 	 * <p> Description: Search for posts matching a keyword </p>
+	 * 
+	 * @param keyword : String for keyword to search posts by
 	 */
 	public List<DiscussionPost> searchPosts(String keyword) {
 	    List<DiscussionPost> list = new ArrayList<>();
@@ -1952,10 +1980,12 @@ public class Database {
 	 * <p> Method: searchReplies </p>
 	 * 
 	 * <p> Description: Search through replies across the board matching a keyword </p>
+	 * 
+	 * @param keyword : String for keyword to search replies by
 	 */
 	public List<DiscussionReply> searchReplies(String keyword) {
 	    List<DiscussionReply> list = new ArrayList<>();
-	    String sql = "SELECT id, post_id, author, body, created_at, read FROM replies WHERE LOWER(body) LIKE ? OR LOWER(author) LIKE ? ORDER BY created_at ASC";
+	    String sql = "SELECT id, post_id, author, body, created_at, read, quality FROM replies WHERE LOWER(body) LIKE ? OR LOWER(author) LIKE ? ORDER BY created_at ASC";
 	    
 	    try (PreparedStatement ps = connection.prepareStatement(sql)) {
 	        
@@ -1965,10 +1995,19 @@ public class Database {
 	        
 	        try (ResultSet rs = ps.executeQuery()) {
 	            while (rs.next()) {
-	                list.add(new DiscussionReply(rs.getInt("id"), rs.getInt("post_id"), rs.getString("author"), rs.getString("body"), rs.getString("created_at"), rs.getBoolean("read")));
+	                list.add(new DiscussionReply(
+	                		rs.getInt("id"), 
+	                		rs.getInt("post_id"), 
+	                		rs.getString("author"), 
+	                		rs.getString("body"), 
+	                		rs.getString("created_at"), 
+	                		rs.getBoolean("read"),
+            				rs.getBoolean("quality")));
 	            }
 	        }
-	    } catch (SQLException e) { e.printStackTrace(); }
+	    } catch (SQLException e) {
+	    	e.printStackTrace();
+	    } 
 	    
 	    return list;
 	}
@@ -1977,10 +2016,15 @@ public class Database {
 	 * <p> Method: getFilteredReplies </p>
 	 * 
 	 * <p> Description: Filter by user or keyword and read or unread </p>
+	 * 
+	 * @param postId : int of specific post ID
+	 * @param keyword : String of searched keyword
+	 * @param byUser : boolean of specific user to filter by 
+	 * @param unreadOnly : boolean for read vs unread 
 	 */
 	public List<DiscussionReply> getFilteredReplies(int postId, String keyword, boolean byUser, boolean unreadOnly) {
 	    List<DiscussionReply> list = new ArrayList<>();
-	    StringBuilder sql = new StringBuilder("SELECT id, post_id, author, body, created_at, read FROM replies WHERE post_id = ?");
+	    StringBuilder sql = new StringBuilder("SELECT id, post_id, author, body, created_at, read, quality FROM replies WHERE post_id = ?");
 	    
 	    if (unreadOnly) {
 	    	sql.append(" AND read = FALSE");
@@ -1999,17 +2043,24 @@ public class Database {
 	        }
 	        try (ResultSet rs = ps.executeQuery()) {
 	            while (rs.next()) {
-	                list.add(new DiscussionReply(rs.getInt("id"), rs.getInt("post_id"), rs.getString("author"), rs.getString("body"), rs.getString("created_at"), rs.getBoolean("read")));
+	                list.add(new DiscussionReply(
+	                		rs.getInt("id"), 
+	                		rs.getInt("post_id"), 
+	                		rs.getString("author"), 
+	                		rs.getString("body"), 
+	                		rs.getString("created_at"), 
+	                		rs.getBoolean("read"),
+	                		rs.getBoolean("quality")));
 	            }
 	        }
-	    } catch (SQLException e) { e.printStackTrace(); }
+	    } catch (SQLException e) {
+	    	e.printStackTrace();
+	    }
 	    
 	    return list;
 	}
+	// End of search & filter methods 
 	
-	
-	
-	// XX - end of new search methods
 	
 	
 	public Map<String, List<String>> getClassRoster() {
@@ -2250,10 +2301,119 @@ public class Database {
 		
 		
 	}
-	
 	// Note : Need id from posts to match post_ID from replies
 	
+	
+	// =========================================================
+	// Aspect 5 & 6 Methods - Filtered Grader Page & Answer Quality Review   
+	// =========================================================
+	
+	
+	/*******
+	 * <p> Method: getStudentPosts </p>
+	 *
+	 * <p> Description: This method gets all discussion board posts created by a specific student, for grading purposes.  
+	 * This supports TP3 Aspect 5 (Filtered Multi-View Grading Interface/Grader Page) by 
+	 * providing the instructional team with a filtered view scoped to a single student's content,
+	 * establishing efficient grading for student engagement. </p>
+	 *
+	 * @param String username : a String that specifies author username to filter by
+	 *
+	 * @return list : list of DiscussionPost objects made by specified student
+	 *
+	 */
+	public List<DiscussionPost> getStudentPosts(String username) {
+	    List<DiscussionPost> list = new ArrayList<>();
+	    String sql = "SELECT id, author, title, body, post_type, image_filename, image_data, tags, created_at FROM posts WHERE LOWER(author) = ? ORDER BY created_at DESC";
+	   
+	    try (PreparedStatement ps = connection.prepareStatement(sql)) {
+	        ps.setString(1, username.toLowerCase());
+	       
+	        try (ResultSet rs = ps.executeQuery()) {
+	            while (rs.next()) {
+	                Blob blob = rs.getBlob("image_data");
+	                Image img = (blob != null) ? new Image(blob.getBinaryStream()) : null;
+	                list.add(new DiscussionPost(
+	                		rs.getInt("id"), 
+	                		rs.getString("author"), 
+	                		rs.getString("title"), 
+	                		rs.getString("body"), 
+	                		rs.getString("post_type"), 
+	                		rs.getString("image_filename"), 
+	                		img, 
+	                		rs.getString("created_at"), 
+	                		rs.getString("tags")));
+	            }
+	        }
+	    } catch (SQLException e) { 
+	    	e.printStackTrace(); 
+	    }
+	    return list;
+	}
 
+	/*******
+	 * <p> Method: getStudentReplies </p>
+	 *
+	 * <p> Description: This method utilizes multitable JOIN query to get every reply attached to the posts created by a specific student.
+	 * This supports TP3 Aspect 5 by efficiently structuring a parent/child relationship view for posts/replies
+	 * which allows graders to see the context of a student's conversation in an organized manner. </p>
+	 *
+	 * @param String evaluatedStudent : a String that specifies post author's username, the student being evaluated/graded currently
+	 *
+	 * @return list : list of DiscussionReply objects connected to specific student posts
+	 *
+	 */
+	public List<DiscussionReply> getStudentReplies(String evaluatedStudent) {
+	    List<DiscussionReply> list = new ArrayList<>();
+	    String sql = "SELECT r.id, r.post_id, r.author, r.body, r.created_at, r.read, r.quality " +
+	                 "FROM replies r JOIN posts p ON r.post_id = p.id "                           +
+	                 "WHERE LOWER(p.author) = ? ORDER BY r.created_at ASC";
+	   
+	    try (PreparedStatement ps = connection.prepareStatement(sql)) {
+	        ps.setString(1, evaluatedStudent.toLowerCase());
+	        
+	        try (ResultSet rs = ps.executeQuery()) {
+	            while (rs.next()) {
+	                list.add(new DiscussionReply(
+	                		rs.getInt("id"), 
+	                		rs.getInt("post_id"), 
+	                		rs.getString("author"), 
+	                		rs.getString("body"), 
+	                		rs.getString("created_at"), 
+	                		rs.getBoolean("read"), 
+	                		rs.getBoolean("quality")));
+	            }
+	        }
+	    } catch (SQLException e) {
+	    	e.printStackTrace();
+	    }
+	    return list;
+	}
+
+	/*******
+	 * <p> Method: updateAnswerQuality </p>
+	 *
+	 * <p> Description: This method updates the answer quality annotation flag for a specific student reply.
+	 * This supports TP3 Aspect 6 (Answer Quality Review Workflow) by allowing the instructional team to annotate whether a student's response satisfies requirements. </p>
+	 *
+	 * @param int replyId : specifies the ID of the reply being annotated 
+	 *
+	 * @param boolean quality : flag indicating the grader's quality assessment, boolean is true if answer looks reasonable
+	 *
+	 */
+	public void updateAnswerQuality(int replyId, boolean quality) {
+	    String sql = "UPDATE replies SET quality = ? WHERE id = ?";
+	   
+	    try (PreparedStatement ps = connection.prepareStatement(sql)) {
+	        ps.setBoolean(1, quality);
+	        ps.setInt(2, replyId);
+	        ps.executeUpdate();
+	    } catch (SQLException e) { 
+	    	e.printStackTrace(); 
+	    }
+	}
+	
+	
 
 	
 }
