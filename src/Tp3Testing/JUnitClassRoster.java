@@ -28,7 +28,6 @@ import guiClassRoster.ControllerClassRoster;
 
  */
 
-
 class JUnitClassRoster {
 	
 		
