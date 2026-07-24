@@ -280,7 +280,7 @@ public class ControllerDiscussion {
 	 * selection then calls saveImagePost(). Refreshes the post list on success. </p>
 	 *
 	 */
-	protected static void performCreatePost() {
+	public static void performCreatePost() {
 		if(read_only) {
 			System.out.println("turn read only off");
 			return;
@@ -336,7 +336,7 @@ public class ControllerDiscussion {
 	 * title and body fields are not empty, then updates the database record. </p>
 	 *
 	 */
-	protected static void performUpdatePost() {
+	public static void performUpdatePost() {
 		if(read_only) {
 			System.out.println("turn read only off");
 			return;
@@ -378,7 +378,7 @@ public class ControllerDiscussion {
 	 * sentinels, clears the reply list, and refreshes the post list. </p>
 	 *
 	 */
-	protected static void performDeletePost() {
+	public static void performDeletePost() {
 		if(read_only) {
 			System.out.println("turn read only off");
 			return;
@@ -425,7 +425,7 @@ public class ControllerDiscussion {
 	 * selectedPostId, and refreshes the reply list. </p>
 	 *
 	 */
-	protected static void performCreateReply() {
+	public static void performCreateReply() {
 		if(read_only) {
 			System.out.println("turn read only off");
 			return;
@@ -476,6 +476,16 @@ public class ControllerDiscussion {
             
             System.out.println("read: " + read_only);
     }
+    
+    /*******
+	 * <p> Method: get_read() </p>
+	 *
+	 * <p> Description: grab the curr read. </p>
+	 *
+	 */
+	public boolean get_read() {
+		return read_only;
+	}
 
 
 	/*******
@@ -485,7 +495,7 @@ public class ControllerDiscussion {
 	 * are selected and that the reply body is not empty, then updates the reply record. </p>
 	 *
 	 */
-	protected static void performUpdateReply() {
+	public static void performUpdateReply() {
 		if(read_only) {
 			System.out.println("turn read only off");
 			return;
@@ -511,7 +521,7 @@ public class ControllerDiscussion {
 	 * are selected, deletes the reply, resets selectedReplyId, and refreshes the reply list. </p>
 	 *
 	 */
-	protected static void performDeleteReply() {
+	public static void performDeleteReply() {
 		if(read_only) {
 			System.out.println("turn read only off");
 			return;
