@@ -42,6 +42,16 @@ public class viewInstructions {
 	private int index = 0;
 	private int num_images;
 	
+	/*******
+	 * <p> Method: displayviewInstructions(Stage ps, User user) </p>
+	 *
+	 * <p> Description: This method is used to display the instructions view. It sets up the stage
+	 * with the appropriate scene and initializes the user. </p>
+	 *
+	 * @param ps The Stage object where the scene will be displayed.
+	 * @param user The User object representing the currently logged-in user.
+	 *
+	 */
 	public static void displayviewInstructions(Stage ps, User user) {
 		theStage = ps;
 		theUser = user;
@@ -53,6 +63,13 @@ public class viewInstructions {
 		theStage.show();	
 	}
 	
+	/*******
+	 * <p> Method: viewInstructions() </p>
+	 *
+	 * <p> Description: This is the constructor for the viewInstructions class. It initializes the
+	 * list of images, sets up the scene, and configures the navigation buttons. </p>
+	 *
+	 */
 	private viewInstructions() {
 		list = controllerInstructions.get_images().get(0);
 		num_images = list.size();
@@ -62,7 +79,6 @@ public class viewInstructions {
 		
 		theInstructionsScene = new Scene(theRootPane, width, height);
 		theInstructionsScene.getStylesheets().add(ViewAdminHome.class.getResource("/dark-theme.css").toExternalForm());
-
 	
 		ImageView imageView = new ImageView(list.get(index));
 		imageView.setX(10);
@@ -78,7 +94,6 @@ public class viewInstructions {
 		leftView.setFitHeight(40); 
 		leftView.setPreserveRatio(false);
 		leftView.setVisible(false);
-		//leftView.setOpacity(0.5);
 		
 		button_Back.setLayoutX(110);
 		button_Back.setLayoutY(635);
@@ -93,7 +108,6 @@ public class viewInstructions {
 		rightView.setFitHeight(40); 
 		rightView.setPreserveRatio(false);
 		rightView.setVisible(false);
-		//rightView.setOpacity(0);
 		
 		button_Next.setLayoutX(400);
 		button_Next.setLayoutY(635);
@@ -106,12 +120,10 @@ public class viewInstructions {
 		button_Finish.setDisable(false);
 		button_Finish.setOpacity(0);
 		
-	
 		button_Next.setOnMouseEntered(event -> {
 		    rightView.setVisible(true);
 		});
 
-		// Hide rightView when mouse exits
 		button_Next.setOnMouseExited(event -> {
 		    rightView.setVisible(false);
 		});
@@ -130,18 +142,15 @@ public class viewInstructions {
 		    if (index < list.size()) {
 		        imageView.setImage(list.get(index));
 		    }
-
 		    if (index > 0) {
 		        button_Back.setDisable(false);
 		    }
-		    
 		    if (index == num_images - 1) {
 		        button_Next.setDisable(true);
 		        button_Finish.setOpacity(100);
 		        button_Finish.setDisable(false);
 		    }
 		    
-		 
 		    System.out.println("Next clicked, index = " + index);
 		});
 
@@ -152,11 +161,9 @@ public class viewInstructions {
 		    if (index >= 0) {
 		        imageView.setImage(list.get(index));
 		    }
-
 		    if (index < num_images) {
 		        button_Next.setDisable(false);
 		    }
-
 		    if (index <= 0) {
 		        button_Back.setDisable(true);
 		        index = 0; 
@@ -174,11 +181,7 @@ public class viewInstructions {
 		theRootPane.getChildren().addAll(
 				imageView, leftView, rightView, button_Next, button_Back, button_Finish
 				
-		);
-		// Populate the window with the title and other common widgets and set their static state
-		
-		// GUI Area 1
-		
+		);		
 	}
 	
 	/*-*******************************************************************************************

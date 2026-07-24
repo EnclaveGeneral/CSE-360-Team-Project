@@ -11,6 +11,18 @@ public class controllerInstructions {
 		
 	}
 	
+    /******
+     * <p> Method: get_images() </p>
+     *
+     * <p> Description: This method retrieves all PNG images from the "src/images" directory and
+     * organizes them into two separate lists based on their names. Images named "back" or "next"
+     * are added to a secondary list, while all other images are added to the primary list. The
+     * method returns a list containing both lists of images. </p>
+     *
+     * @return An ArrayList containing two ArrayLists of Image objects: the first for general images,
+     *         and the second for "back" and "next" images.
+     *
+     */
 	public static ArrayList<ArrayList<Image>> get_images() {
         ArrayList<Image> list = new ArrayList<>();
         ArrayList<Image> list2 = new ArrayList<>();
