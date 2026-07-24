@@ -113,6 +113,15 @@ public class ControllerDiscussion {
 	    }
 	}
 
+	/*******
+	 * <p> Method: filter_by_tags(String tag) </p>
+	 *
+	 * <p> Description: Filters the posts displayed in listView_Posts to only those that contain
+	 * the specified tag. Clears the current list and repopulates it with matching posts. </p>
+	 *
+	 * @param tag is a String that specifies the tag to filter posts by.
+	 *
+	 */
 	protected static void filter_by_tags(String tag) {
 	    ViewDiscussion.listView_Posts.getItems().clear();
 	    List<DiscussionPost> posts = theDatabase.getAllPosts();
@@ -142,7 +151,6 @@ public class ControllerDiscussion {
 	        ViewDiscussion.listView_Posts.getItems().add(postBox);
 	    }
 	}
-
 
 	/*******
 	 * <p> Method: refreshReplyList(int postId) </p>

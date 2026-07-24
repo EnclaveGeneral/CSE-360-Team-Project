@@ -386,20 +386,17 @@ public class ViewDiscussion {
 	    }
 	}
 	
+	/******
+	 * <p> Method: set_reset(boolean c) </p>
+	 *
+	 * <p> Description: Sets the reset variable and adds or removes the reset filter button
+	 * from the root pane based on the value of c. </p>
+	 *
+	 * @param c is a boolean that determines whether to show or hide the reset filter button.
+	 *
+	 */
 	public static void set_reset(boolean c){
 		reset = c;
-		
-		// XX old if 
-		//if(reset) {
-		//	theRootPane.getChildren().add(button_reset_filter);
-		//}
-		
-		// XX new if
-		//if(reset) {
-		//	if (!theRootPane.getChildren().contains(button_reset_filter)) {
-		//		theRootPane.getChildren().add(button_reset_filter);
-		//	}
-		//}
 		
 		if(reset && !theRootPane.getChildren().contains(button_reset_filter)) {
             theRootPane.getChildren().add(button_reset_filter);
