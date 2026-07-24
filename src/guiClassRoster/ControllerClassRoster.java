@@ -2,6 +2,10 @@ package guiClassRoster;
 
 import database.Database;
 import applicationMain.FoundationsMain;
+import guiAdminHome.ViewAdminHome; 
+import guiGraderView.ViewGraderView;
+import guiRole1.ViewRole1Home; 
+import entityClasses.User; 
 import javafx.geometry.Insets;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
@@ -26,7 +30,7 @@ import java.util.*;
  */
 public class ControllerClassRoster {
 
-	/*-*******************************************************************************************
+	/*********************************************************************************************
 
 	Attributes
 
@@ -47,7 +51,7 @@ public class ControllerClassRoster {
 	
 
 
-	/*-*******************************************************************************************
+	/*********************************************************************************************
 
 	Constructor
 
@@ -75,29 +79,26 @@ public class ControllerClassRoster {
 	 */
     
 	public static void build(Map<String, List<String>> classList) {
-	    List<String> users = theDatabase.getUserList();
+	    List<String> users = theDatabase.getStudentList();
 	
 	    if (users == null) {
 	        throw new IllegalStateException(
-	                "Database returned a null user list.");
+	                "Database returned a null student list.");
+	    }
+        
+	    if(classList.size() > 0 ) {
+        	classList.clear();
+        }
+             	
+        for (String username : users) {
+        	List<String> studentResponses = new ArrayList<>(); 
+        	if (!classList.containsKey(username)) {
+	             classList.put(username, studentResponses);
 	        }
-	        if(classList.size() > 0 ) {
-	        	classList.clear();
-	        }
-	       
-	        
-	        
-	
-	        for (String username : users) {
-	        	List<String> studentResponses = new ArrayList<>(); 
-	        	if (!classList.containsKey(username)) {
-		             classList.put(username, studentResponses);
-		            }
-	        	}
-	        }
+        }
+	 }
 	   
-	
-	
+		
 	/*******
 	 * <p> Title: getFlag </p>
 	 *
@@ -129,8 +130,8 @@ public class ControllerClassRoster {
 	 */
 	
 	
-	protected static void refreshClassRoster(entityClasses.User user) {
-		if (user.getNewRole1() || user.getAdminRole()) {
+	protected static void refreshClassRoster(User user) {
+		if (user.getNewRole2() || user.getAdminRole()) {
 			instructorPlusClassRoster();
 		} else {
 			studentClassRoster();
@@ -139,7 +140,7 @@ public class ControllerClassRoster {
 	}
 	
 
-	/*-*******************************************************************************************
+	/*********************************************************************************************
 
 	List refresh methods
 
@@ -210,10 +211,6 @@ public class ControllerClassRoster {
 	        ViewClassRoster.listView_Posts.getItems().add(row);
 	    }
 	    
-//	    for (String student : classList.keySet()) {
-//	    	System.out.println(student + ": " + classList.get(student));
-//	    	System.out.println(student + " Responded to " + classList.get(student).size() + " Students.\n");
-//	    }
 	    
 	}
 	
@@ -266,7 +263,7 @@ public class ControllerClassRoster {
 
 
 
-	/*-*******************************************************************************************
+	/*********************************************************************************************
 
 	Navigation
 
@@ -276,20 +273,20 @@ public class ControllerClassRoster {
 	 * <p> Method: performBack() </p>
 	 *
 	 * <p> Description: Returns the user to their home page. Reads activeHomePage to decide
-	 * whether to route to the Admin home (1) or Role1 home (any other value). </p>
+	 * whether to route to the Admin home page or Role1 home (student view) or Role2 home (grader view). </p>
 	 *
 	 */
 	protected static void performBack() {
-		if (ViewClassRoster.theUser.getAdminRole()) {
-			guiAdminHome.ViewAdminHome.displayAdminHome(
-				ViewClassRoster.theStage, ViewClassRoster.theUser);
-		} else if (ViewClassRoster.theUser.getNewRole1()) {
-			guiRole1.ViewRole1Home.displayRole1Home(
-					ViewClassRoster.theStage, ViewClassRoster.theUser);
-		} else {
-			guiRole2.ViewRole2Home.displayRole2Home(
-				ViewClassRoster.theStage, ViewClassRoster.theUser);
-		}
+		
+		if (FoundationsMain.activeHomePage == 1) {
+            ViewAdminHome.displayAdminHome(ViewClassRoster.theStage, ViewClassRoster.theUser);		// return to admin home page
+        }
+		else if (FoundationsMain.activeHomePage == 3) {
+            ViewGraderView.displayGraderView(ViewClassRoster.theStage, ViewClassRoster.theUser);	// role 2 returns to grader view 
+        }
+		else {
+            ViewRole1Home.displayRole1Home(ViewClassRoster.theStage, ViewClassRoster.theUser);		// default is role 1 home
+        }
 	}
 	
 }

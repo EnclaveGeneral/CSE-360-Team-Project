@@ -25,6 +25,7 @@ public class DiscussionReply {
 	private final String  body;
 	private final String  createdAt;
 	private boolean 	  read;
+	private boolean 	  quality;
 
 
 	/*******
@@ -40,41 +41,101 @@ public class DiscussionReply {
 	 *
 	 * @param body       specifies the reply text
 	 *
-	 * @param isAccepted specifies whether this reply has been marked as the accepted answer
-	 *
 	 * @param createdAt  specifies the timestamp string from H2
+	 * 
+	 * @param read 		 specifies whether reply read or not
+	 * 
+	 * @param quality	 specifies whether reply quality is valid/invalid
 	 *
 	 */
-	public DiscussionReply(int id, int postId, String author, String body, String createdAt, boolean read) {
+	public DiscussionReply(int id, int postId, String author, String body, String createdAt, boolean read, boolean quality) {
 		this.id         = id;
 		this.postId     = postId;
 		this.author     = author;
 		this.body       = body;
 		this.createdAt  = createdAt;
 		this.read 		= read;
+		this.quality    = quality;
 	}
 
 
-	/** @return the reply's primary key */
-	public int     getId()         { return id; }
+	/*******
+	 * <p> Method: getId </p>
+	 * <p> Description: Gets the reply's primary key </p>
+	 *
+	 * @return int id
+	 */
+	public int     getId()         		  { return id; }
 
-	/** @return the parent post's id */
-	public int     getPostId()     { return postId; }
-
-	/** @return the username of the replier */
-	public String  getAuthor()     { return author; }
-
-	/** @return the reply body text */
-	public String  getBody()       { return body; }
 	
-	/** @return the boolean isRead */
-	public boolean  getRead()       { return read; }
-	
-	/** @return the boolean isRead */
-	public void  setRead(boolean input)       { read = input; }
-	
+	/*******
+	 * <p> Method: getPostId </p>
+	 * <p> Description: Gets the parent post's id </p>
+	 *
+	 * @return int postId
+	 */
+	public int     getPostId()     		  { return postId; }
 
-	/** @return H2 timestamp string */
-	public String  getCreatedAt()  { return createdAt; }
+	
+	/*******
+	 * <p> Method: getAuthor </p>
+	 * <p> Description: Gets the username of the replier </p>
+	 *
+	 * @return String author
+	 */
+	public String  getAuthor()     		  { return author; }
 
+	
+	/*******
+	 * <p> Method: getBody </p>
+	 * <p> Description: Gets the reply body text </p>
+	 *
+	 * @return String body
+	 */
+	public String  getBody()       		  { return body; }
+	
+	
+	/*******
+	 * <p> Method: getRead </p>
+	 * <p> Description: Gets the read status </p>
+	 *
+	 * @return boolean read
+	 */
+	public boolean  getRead()       	  { return read; }
+	
+	
+	/*******
+	 * <p> Method: setRead </p>
+	 * <p> Description: Sets read to input </p>
+	 *
+	 * @param boolean input, the boolean to set read to
+	 */
+	public void  setRead(boolean input)   { read = input; }
+	
+	
+	/*******
+	 * <p> Method: getCreatedAt </p>
+	 * <p> Description: Gets the creation timestamp </p>
+	 *
+	 * @return String createdAt, the H2 timestamp string
+	 */
+	public String  getCreatedAt()  		  { return createdAt; }
+	
+	
+	/*******
+	 * <p> Method: getQuality </p>
+	 * <p> Description: Gets the boolean quality flag, for answer quality check </p>
+	 *
+	 * @return boolean quality
+	 */
+	public boolean getQuality() 		  { return quality; }
+	
+	
+	/*******
+	 * <p> Method: setQuality </p>
+	 * <p> Description: Sets quality to the input </p>
+	 *
+	 * @param boolean input, the boolean to set quality to
+	 */
+	public void setQuality(boolean input) { quality = input; } 
 }

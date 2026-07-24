@@ -27,7 +27,7 @@ import guiAdminHome.ControllerAdminHome;
  * @author Lynn Robert Carter
  * 
  * @version 1.00		2025-04-20 Initial version
- * @version 2.00		2026-07-19 Repurposed as the Grader Home Page for TP3 Aspect #1
+ * @version 2.00		2026-07-19 Repurposed as the Grader Home Page for TP3 Aspect 1
  *  
  */
 
@@ -172,7 +172,7 @@ public class ViewRole2Home {
 		
 			// This is a stub, so this area is empty
 		
-		setupButtonUI(button_graderView, "Dialog", 16, 250, Pos.CENTER, 400, 270);
+		setupButtonUI(button_graderView, "Dialog", 16, 250, Pos.CENTER, 275, 270);			// Updated title spacing
 		button_graderView.setOnAction((_) -> {ControllerRole2Home.openGraderView(); });
 		
 		
