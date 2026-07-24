@@ -111,7 +111,7 @@ public class ParticipationStatsTestingAutomation {
 	 *
 	 */
 	static DiscussionReply reply(int id, int postId, String author) {
-		return new DiscussionReply(id, postId, author, "reply body", "2026-07-14 00:00:00", false);
+		return new DiscussionReply(id, postId, author, "reply body", "2026-07-14 00:00:00", false, false);
 	}
 
 
