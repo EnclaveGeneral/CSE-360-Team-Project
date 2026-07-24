@@ -107,7 +107,7 @@ public class Database {
 			connection = DriverManager.getConnection(DB_URL, USER, PASS);
 			statement = connection.createStatement(); 
 			// You can use this command to clear the database and restart from fresh.
-//             statement.execute("DROP ALL OBJECTS");
+			statement.execute("DROP ALL OBJECTS");
 			
 			// You can use this command to flood the database with dummy users, posts, and replies.
 //			inject();
@@ -154,6 +154,7 @@ public class Database {
 
 	    // Create the unified discussion tables (posts + replies)
 	    createDiscussionTables();
+	    createImageEntriesTable();
 	}
 
 
@@ -1339,7 +1340,7 @@ public class Database {
 	                               "col_position INT" +
 	                               ")";
 	    // stores the arraylist of comments
-	    String createCommentsTable = "CREATE TABLE IF NOT EXISTS comments (" +
+	    String comments = "CREATE TABLE IF NOT EXISTS comments (" +
 	                                 "id INT AUTO_INCREMENT PRIMARY KEY, " +
 	                                 "image_id INT NOT NULL, " +
 	                                 "comment_text VARCHAR(1000), " +
@@ -1349,7 +1350,7 @@ public class Database {
 	    
 	    try (Statement stmt = connection.createStatement()) {
 	        stmt.execute(createImagesTable);
-	        stmt.execute(createCommentsTable);
+	        stmt.execute(comments);
 	    } catch (SQLException e) {
 	        e.printStackTrace();
 	    }
