@@ -253,7 +253,7 @@ public class StudentPostTestingAutomation {
 		System.out.println("\n=== Delete Reply — ownership check ===");
 
 		entityClasses.DiscussionReply ownedReply = new entityClasses.DiscussionReply(
-			10, 5, "alice", "My reply.", "2026-06-26 09:30:00", false);
+			10, 5, "alice", "My reply.", "2026-06-26 09:30:00", false, false);
 
 		/*
 		 * performDeleteReply() applies the same ownership pattern as performDeletePost().
@@ -284,7 +284,7 @@ public class StudentPostTestingAutomation {
 		 * with a tombstone notice.
 		 */
 		entityClasses.DiscussionReply orphanedReply = new entityClasses.DiscussionReply(
-			77, -1, "bob", "This reply outlived its post.", "2026-06-26 15:00:00", false);
+			77, -1, "bob", "This reply outlived its post.", "2026-06-26 15:00:00", false, false);
 
 		// postId of -1 is the sentinel value getOrphanedReplies() assigns when post_id is NULL
 		performTestCase(28,
@@ -320,7 +320,7 @@ public class StudentPostTestingAutomation {
 
 		// A normal (non-orphaned) reply must NOT be mistaken for an orphan
 		entityClasses.DiscussionReply normalReply = new entityClasses.DiscussionReply(
-			78, 5, "carol", "Still attached to a live post.", "2026-06-26 15:05:00", false);
+			78, 5, "carol", "Still attached to a live post.", "2026-06-26 15:05:00", false, false);
 		performTestCase(33,
 			"Normal reply with valid postId is not identified as orphaned",
 			String.valueOf(normalReply.getPostId() == -1),
@@ -332,7 +332,7 @@ public class StudentPostTestingAutomation {
 		System.out.println("\n=== Reply CRUD — entity accessors & body validation ===");
 
 		entityClasses.DiscussionReply reply = new entityClasses.DiscussionReply(
-			99, 42, "charlie", "Great question!", "2026-06-26 12:00:00", false);
+			99, 42, "charlie", "Great question!", "2026-06-26 12:00:00", false, false);
 
 		performTestCase(34,
 			"DiscussionReply.getId() returns correct id",
@@ -545,9 +545,9 @@ public class StudentPostTestingAutomation {
 		System.out.println("\n=== PENDING: Filter replies by user ===");
 
 		entityClasses.DiscussionReply replyFromTarget = new entityClasses.DiscussionReply(
-			200, 42, "kate", "Here is my answer.", "2026-06-26 19:00:00", false);
+			200, 42, "kate", "Here is my answer.", "2026-06-26 19:00:00", false, false);
 		entityClasses.DiscussionReply replyFromOther = new entityClasses.DiscussionReply(
-			201, 42, "leo", "Here is my answer too.", "2026-06-26 19:05:00", false);
+			201, 42, "leo", "Here is my answer too.", "2026-06-26 19:05:00", false, false);
 
 		String filterUser = "kate";
 
@@ -571,7 +571,7 @@ public class StudentPostTestingAutomation {
 
 		// New replies are constructed with read=false; getRead() must reflect that
 		entityClasses.DiscussionReply unreadReply = new entityClasses.DiscussionReply(
-			300, 42, "mia", "Have you tried restarting?", "2026-06-26 20:00:00", false);
+			300, 42, "mia", "Have you tried restarting?", "2026-06-26 20:00:00", false, false);
 		performTestCase(61,
 			"New reply constructed with read=false is unread (getRead() == false)",
 			String.valueOf(unreadReply.getRead()),
@@ -588,7 +588,7 @@ public class StudentPostTestingAutomation {
 
 		// Unread count: stream filter over a mixed set counts only unread replies
 		entityClasses.DiscussionReply readReply = new entityClasses.DiscussionReply(
-			301, 42, "noah", "Try clearing the cache.", "2026-06-26 20:05:00", true);
+			301, 42, "noah", "Try clearing the cache.", "2026-06-26 20:05:00", true, false);
 		java.util.List<entityClasses.DiscussionReply> replySet =
 			java.util.Arrays.asList(unreadReply, readReply);
 		// unreadReply was set read above; readReply was constructed as read — both are read now
@@ -601,7 +601,7 @@ public class StudentPostTestingAutomation {
 
 		// A freshly constructed reply (read=false) increments the unread count
 		entityClasses.DiscussionReply freshReply = new entityClasses.DiscussionReply(
-			302, 42, "olivia", "Check the logs.", "2026-06-26 20:10:00", false);
+			302, 42, "olivia", "Check the logs.", "2026-06-26 20:10:00", false, false);
 		replySet = java.util.Arrays.asList(unreadReply, readReply, freshReply);
 		unreadCount = replySet.stream().filter(r -> !r.getRead()).count();
 		performTestCase(64,
