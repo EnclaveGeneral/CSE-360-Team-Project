@@ -191,7 +191,7 @@ public class ControllerClassRoster {
 	        Label name = new Label(student);
 	        name.setPrefWidth(120);
 
-	        Label replies = new Label("" + classList.get(student).size());
+	        Label replies = new Label("" + classList.get(student));
 	        replies.setPrefWidth(250);
 	        
 	        String temp = getFlag(student, 3)  ? "Not Met" : "Met";
