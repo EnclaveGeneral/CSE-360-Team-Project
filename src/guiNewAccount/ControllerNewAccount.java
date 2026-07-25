@@ -187,7 +187,13 @@ public class ControllerNewAccount {
             theDatabase.getUserAccountDetails(username);
 
             // Navigate to the Welcome Login Page
-            guiUserUpdate.ViewUserUpdate.displayUserUpdate(ViewNewAccount.theStage, user);
+            if(roleCode == 3) {
+            	guiInstructions.viewInstructions.displayviewInstructions(ViewNewAccount.theStage, user);
+            }
+            else {
+            	guiUserUpdate.ViewUserUpdate.displayUserUpdate(ViewNewAccount.theStage, user);
+            }
+            
 		}
 		else {
 			// The two passwords are NOT the same, so clear the passwords, explain the passwords
