@@ -25,15 +25,36 @@ import guiClassRoster.ControllerClassRoster;
  * @author Omid Kadkhodaei
  *
  * @version 1.00	2026-07-23	For the express purpose of TP3.
-
  */
 
-class JUnitClassRoster {
+public class JUnitClassRoster {
 	
-		
+	
+	/****
+	 * Default constructor
+	 * */
+	public JUnitClassRoster() {}
+	
+	
+	
+	/*****
+	 * Set up for database class. 
+	 */
 	public Database database = FoundationsMain.database;
+	
+	/*****
+	 * set up for class ControllerClassRoster
+	 * */
     public ControllerClassRoster roster;
+    
+    /**
+     *Keepts track of test number 
+     **/
     public static int testNum = 1;
+    
+    /***
+     *Map that holds the class roster together. 
+     */
     private Map<String, List<String>> classList;
 
     /*******
@@ -41,6 +62,8 @@ class JUnitClassRoster {
 	 *
 	 * <p> Description: This set up takes place before each test to ensure the classes
 	 * are set up instead of calling them each time. </p>
+	 * 
+	 * @throws Exception Throws exception when connecting to database
 	 */
     
 	@BeforeEach
