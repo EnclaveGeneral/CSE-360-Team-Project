@@ -4,7 +4,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+
+import guiAdminHome.ViewAdminHome;
 import javafx.scene.image.Image;
+import javafx.stage.Stage;
 
 public class controllerInstructions {
 	public controllerInstructions() {
@@ -61,4 +64,28 @@ public class controllerInstructions {
         System.out.println(list3);
         return list3;
     }
+	
+	/**********
+	 * <p> 
+	 * 
+	 * Title: performLogout () Method. </p>
+	 * 
+	 * <p> Description: Protected method that logs this user out of the system and returns to the
+	 * login page for future use.</p>
+	 */
+	protected static void performLogout(Stage theStage) {
+		guiUserLogin.ViewUserLogin.displayUserLogin(theStage);
+	}
+	
+	/**********
+	 * <p> 
+	 * 
+	 * Title: performQuit () Method. </p>
+	 * 
+	 * <p> Description: Protected method that gracefully terminates the execution of the program.
+	 * </p>
+	 */
+	protected static void performQuit() {
+		System.exit(0);
+	}
 }

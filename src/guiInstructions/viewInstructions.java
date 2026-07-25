@@ -3,6 +3,7 @@ package guiInstructions;
 import java.util.ArrayList;
 
 import entityClasses.User;
+import guiAdminHome.ControllerAdminHome;
 import guiAdminHome.ViewAdminHome;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -19,7 +20,7 @@ import javafx.stage.Stage;
 
 public class viewInstructions {
 	private static double width = 600;
-	private static double height = 730;
+	private static double height = 770;
 	
 	protected static Stage theStage;			// The Stage that JavaFX has established for us
 	private static Pane theRootPane;			// The Pane that holds all the GUI widgets 
@@ -27,6 +28,7 @@ public class viewInstructions {
 	
 	protected static Label label_PageTitle = new Label();
 	protected static Label label = new Label();
+	protected static Label num_label = new Label();
 	
 	protected static Button button_Logout = new Button("Logout");
 	protected static Button button_Quit = new Button("Quit");
@@ -76,6 +78,17 @@ public class viewInstructions {
 		Image left = controllerInstructions.get_images().get(1).get(0);
 		Image right = controllerInstructions.get_images().get(1).get(1);
 		theRootPane = new Pane();
+		num_label.setText("page " + (index + 1) + " of " + num_images);
+		num_label.setFont(Font.loadFont(getClass().getResourceAsStream("/font.ttf"), 40));
+		num_label.setStyle("-fx-text-fill: black; -fx-background-color: #FDF8EC;");
+		if(index > 9) {
+			num_label.setLayoutX(240);
+		}
+		else {
+			num_label.setLayoutX(280);
+		}
+		
+		num_label.setLayoutY(55);
 		
 		theInstructionsScene = new Scene(theRootPane, width, height);
 		theInstructionsScene.getStylesheets().add(ViewAdminHome.class.getResource("/dark-theme.css").toExternalForm());
@@ -141,6 +154,7 @@ public class viewInstructions {
 		    
 		    if (index < list.size()) {
 		        imageView.setImage(list.get(index));
+		        num_label.setText("page " + (index + 1) + " of " + num_images);
 		    }
 		    if (index > 0) {
 		        button_Back.setDisable(false);
@@ -160,6 +174,7 @@ public class viewInstructions {
 		    
 		    if (index >= 0) {
 		        imageView.setImage(list.get(index));
+		        num_label.setText("page " + (index + 1) + " of " + num_images);
 		    }
 		    if (index < num_images) {
 		        button_Next.setDisable(false);
@@ -178,8 +193,17 @@ public class viewInstructions {
 		
 		label_PageTitle.setText("Admin Home Page");
 		
+		setupButtonUI(button_Logout, "Dialog", 18, 250, Pos.CENTER, 20, 730);
+		button_Logout.setOnAction((_) -> {controllerInstructions.performLogout(theStage); });
+    
+		setupButtonUI(button_Quit, "Dialog", 18, 250, Pos.CENTER, 300, 730);
+		button_Quit.setOnAction((_) -> {controllerInstructions.performQuit(); });
+
+		
 		theRootPane.getChildren().addAll(
-				imageView, leftView, rightView, button_Next, button_Back, button_Finish
+				imageView, leftView, rightView, 
+				button_Next, button_Back, button_Finish, num_label,
+				button_Logout,button_Quit
 				
 		);		
 	}
