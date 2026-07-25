@@ -77,6 +77,16 @@ public class ControllerRole2Home {
 	}
 	
 	/*******
+	 * <p> Method: openIn() </p>
+	 *
+	 * <p> Description: lets you go back to the instructions. </p>
+	 *
+	 */
+	protected static void openIn() {
+		guiInstructions.viewInstructions.displayviewInstructions(ViewRole2Home.theStage, ViewRole2Home.theUser);
+	}
+	
+	/*******
 	 * <p> Method: openGraderView() </p>
 	 *
 	 * <p> Description: Navigates to the Grader View page (TP3 Aspect #1), the secure read-only

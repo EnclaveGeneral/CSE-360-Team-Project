@@ -60,6 +60,7 @@ public class ViewRole2Home {
 	// would contain the widgets needed for the user to play the assigned role.
 	
 	protected static Button button_graderView = new Button("Grader View");
+	protected static Button button_in = new Button("Reread Instructions");
 	
 	// This is a separator and it is used to partition the GUI for various tasks
 	protected static Line line_Separator4 = new Line(20, 525, width-20,525);
@@ -175,6 +176,8 @@ public class ViewRole2Home {
 		setupButtonUI(button_graderView, "Dialog", 16, 250, Pos.CENTER, 275, 270);			// Updated title spacing
 		button_graderView.setOnAction((_) -> {ControllerRole2Home.openGraderView(); });
 		
+		setupButtonUI(button_in, "Dialog", 16, 250, Pos.CENTER, 275, 320);			// Updated title spacing
+		button_in.setOnAction((_) -> {ControllerRole2Home.openIn(); });
 		
 		// GUI Area 3
         setupButtonUI(button_Logout, "Dialog", 18, 250, Pos.CENTER, 20, 540);
@@ -188,7 +191,7 @@ public class ViewRole2Home {
 		// Place all of the widget items into the Root Pane's list of children
         theRootPane.getChildren().addAll(
 			label_PageTitle, label_UserDetails, button_UpdateThisUser, line_Separator1,
-	        line_Separator4, button_Logout, button_Quit, button_graderView);
+	        line_Separator4, button_Logout, button_Quit, button_graderView, button_in);
 	}
 	
 	
