@@ -107,10 +107,10 @@ public class Database {
 			connection = DriverManager.getConnection(DB_URL, USER, PASS);
 			statement = connection.createStatement(); 
 			// You can use this command to clear the database and restart from fresh.
-			// statement.execute("DROP ALL OBJECTS");
+			 statement.execute("DROP ALL OBJECTS");
 			
 			// You can use this command to flood the database with dummy users, posts, and replies.
-			inject();
+//			inject();
 
 			createTables();  // Create the necessary tables if they don't exist
 			
@@ -2062,7 +2062,13 @@ public class Database {
 	// End of search & filter methods 
 	
 	
-	
+	/****
+	 * <p>Method : getClassRoster</p>
+	 * 
+	 * <p>Description: generates the info for the map that is used by the class roster. </p>
+	 * 
+	 * @return Returns a map
+	 */
 	public Map<String, List<String>> getClassRoster() {
 	    Map<String, List<String>> list = new TreeMap<>();
 	    
@@ -2191,6 +2197,16 @@ public class Database {
 	 *  discussion-participation requirement (TP3 Aspect #3). */
 	public static final int MINIMUM_DISTINCT_STUDENTS_REQUIRED = 3;
 
+	
+	/***
+	 * <p> Method: register </p>
+	 * 
+	 * <p> Description: This is a quality assurance method utilized by the inject() method 
+	 * in order to flood the database with data that can be tested on. </p>
+	 * 
+	 * @param username
+	 * @throws SQLException
+	 */
 
 	public void register(String username) throws SQLException {
 		String insertUser = "INSERT INTO userDB (userName, password, firstName, middleName, "
@@ -2235,6 +2251,15 @@ public class Database {
 		}
 		
 	}
+	
+	/****
+	 * <p> Method: Inject</p>
+	 * 
+	 * <p> Description: Purely a quality assurance method used to provide dummy data
+	 * to the database.</p>
+	 * 
+	 * @throws SQLException
+	 */
 	
 	public void inject() throws SQLException {
 		try {
