@@ -19,15 +19,18 @@ import entityClasses.User;
  * <p> Description: The JavaFX-based Aggregate Statistics page (TP3 Aspect #4). Shows one row per
  * student on the discussion board: posts authored, replies authored, distinct other students
  * answered, and the pass/fail verdict against the three-student rule, all computed by the
- * ParticipationStats engine. The page is read-only by construction &mdash; it contains no
- * Create, Update, or Delete widgets at all. Follows the Singleton design pattern so that only
- * one instance of the page is ever created, matching ViewGraderView and ViewClassRoster. </p>
+ * ParticipationStats engine. The page is read-only over the discussion board by construction
+ * &mdash; it contains no Create, Update, or Delete widgets at all. Its one write is the Export
+ * button (TP3 Aspect #8), which does not alter any post or reply; it only serializes the current
+ * verdicts to a file for grade recording. Follows the Singleton design pattern so that only one
+ * instance of the page is ever created, matching ViewGraderView and ViewClassRoster. </p>
  *
  * <p> Copyright: Lynn Robert Carter © 2025 </p>
  *
- * @author Weiye (Richard) Zhang (TP3 Aspect #4: Aggregate Statistics Engine)
+ * @author Weiye (Richard) Zhang (TP3 Aspect #4: Aggregate Statistics Engine; Aspect #8: Grading Audit &amp; Export)
  *
  * @version 1.00	2026-07-23	Initial version wiring the HW3 engine into TP3
+ * @version 1.01	2026-07-25	Added the Export for Grading button for TP3 Aspect #8
  */
 public class ViewStatistics {
 
@@ -63,8 +66,9 @@ public class ViewStatistics {
 	protected static ListView<HBox> listView_Stats = new ListView<>();
 	private static Line line_Separator2 = new Line(20, 520, width - 20, 520);
 
-	// GUI Area 3: navigation
-	protected static Button button_Back = new Button("Back");
+	// GUI Area 3: navigation and the Aspect #8 export action
+	protected static Button button_Export = new Button("Export for Grading");
+	protected static Button button_Back   = new Button("Back");
 
 
 	/*-*******************************************************************************************
@@ -145,13 +149,16 @@ public class ViewStatistics {
 		listView_Stats.setPrefSize(width - 40, 390);
 
 		// GUI Area 3
+		setupButtonUI(button_Export, "Dialog", 18, 220, Pos.CENTER, 200, 540);
+		button_Export.setOnAction((_) -> { guiStatistics.ControllerStatistics.performExport(); });
+
 		setupButtonUI(button_Back, "Dialog", 18, 150, Pos.CENTER, 20, 540);
 		button_Back.setOnAction((_) -> { guiStatistics.ControllerStatistics.performBack(); });
 
 		theRootPane.getChildren().addAll(
 			label_PageTitle, label_UserDetails, line_Separator1,
 			listView_Stats, line_Separator2,
-			button_Back);
+			button_Export, button_Back);
 	}
 
 
