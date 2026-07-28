@@ -47,7 +47,7 @@ public class ViewGraderView {
 	private static Pane  theRootPane;
 
 	static Stage theStage;
-	static User  theUser;
+	public static User  theUser;
 
 	private static double width  = FoundationsMain.WINDOW_WIDTH;
 	private static double height = FoundationsMain.WINDOW_HEIGHT;
@@ -66,10 +66,10 @@ public class ViewGraderView {
 
 	// GUI Area 2: the read-only post/reply browser and the coverage status line
 		// Aspect 1
-	protected static ListView<HBox> listView_Posts   = new ListView<>();
+	public static ListView<HBox> listView_Posts   = new ListView<>();
 	protected static ListView<String> listView_Replies = new ListView<>();
 		// Aspect 2 & 7
-	protected static Label label_Coverage = new Label();
+	public static Label label_Coverage = new Label();
 	protected static Button button_ClassRoster = new Button("Class Roster");
 		// Aspect 4
 	protected static Button button_Statistics  = new Button("Participation Statistics");

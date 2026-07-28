@@ -1,8 +1,10 @@
-package guiGraderView;
+package graderViewTests;
 
 import database.Database;
 import applicationMain.FoundationsMain;
 import entityClasses.User;
+import guiGraderView.ControllerGraderView;
+import guiGraderView.ViewGraderView;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;

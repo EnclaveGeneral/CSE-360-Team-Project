@@ -87,7 +87,7 @@ public class ControllerGraderView {
 	 * <p> Tested by guiGraderView.ControllerGraderViewTest.testAllStudentsPostsAreVisible(). </p>
 	 *
 	 */
-	protected static void refreshPostList() {
+	public static void refreshPostList() {
 		ViewGraderView.listView_Posts.getItems().clear();
 		ViewGraderView.label_Coverage.setText("");
 		List<DiscussionPost> posts = theDatabase.getAllPosts();
@@ -114,7 +114,7 @@ public class ControllerGraderView {
 	 * <p> Tested by guiGraderView.ControllerGraderViewTest.testSelectingPostShowsRepliesAndCoverage(). </p>
 	 *
 	 */
-	protected static void selectPost() {
+	public static void selectPost() {
 		int index = ViewGraderView.listView_Posts.getSelectionModel().getSelectedIndex();
 		if (index == -1) return;
 
